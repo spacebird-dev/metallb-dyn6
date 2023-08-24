@@ -1,0 +1,3 @@
+[workspace]
+
+members = ["app", "metallb", "sources/prefix_source", "sources/interface"]
