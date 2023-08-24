@@ -1,3 +1,8 @@
 [workspace]
 
-members = ["app", "metallb", "sources/prefix_source", "sources/interface"]
+members = [
+    "metallb-dyn6",
+    "metallb",
+    "sources/prefix_source",
+    "sources/interface",
+]
