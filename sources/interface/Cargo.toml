@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 interfaces = "0.0.9"
 ipnet = "2.8.0"
-prefix_source = { path = "../prefix_source" }
+address_source = { path = "../address_source" }

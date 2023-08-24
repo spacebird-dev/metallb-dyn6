@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 interface = { path = "../sources/interface" }
-prefix_source = { path = "../sources/prefix_source" }
+address_source = { path = "../sources/address_source" }

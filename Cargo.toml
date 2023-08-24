@@ -2,7 +2,7 @@
 
 members = [
     "metallb-dyn6",
-    "metallb",
-    "sources/prefix_source",
+    "sources/address_source",
     "sources/interface",
+    "sources/my_ip",
 ]

@@ -1,8 +1,9 @@
 mod v6_unicast;
 
+use std::net::Ipv6Addr;
+
+use address_source::{AddressSource, SourceError};
 use interfaces::Interface;
-use ipnet::Ipv6Net;
-use prefix_source::{PrefixSource, SourceError, SourcePrefix, PREFIX_LENGTH};
 
 pub struct InterfaceSource {
     iface: Interface,
@@ -22,8 +23,8 @@ impl InterfaceSource {
     }
 }
 
-impl PrefixSource for InterfaceSource {
-    fn get(&self) -> Result<SourcePrefix, SourceError> {
+impl AddressSource for InterfaceSource {
+    fn get(&self) -> Result<Ipv6Addr, SourceError> {
         self.iface
             .addresses
             .iter()
@@ -31,11 +32,9 @@ impl PrefixSource for InterfaceSource {
                 std::net::SocketAddr::V4(_) => None,
                 std::net::SocketAddr::V6(a) => Some(*a.ip()),
             })
-            .find(v6_unicast::is_unicast_global)
+            .find(v6_unicast::is_unicast)
             .ok_or(SourceError {
                 msg: format!("No global unicast address on interface {}", self.iface.name),
             })
-            // The unwraps here are safe as we use a fixed prefix length as dictated by prefix_source
-            .map(|a| Ipv6Net::new(a, PREFIX_LENGTH).unwrap().try_into().unwrap())
     }
 }
