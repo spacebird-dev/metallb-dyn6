@@ -6,5 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "4.4.0", features = ["derive", "env", "string", "unicode"] }
+tokio = { version = "1.32.0", features = ["full"] }
+anyhow = { version = "1.0.75", features = ["backtrace"] }
 interface = { path = "../sources/interface" }
-address_source = { path = "../sources/address_source" }
+my_ip = { path = "../sources/my_ip" }
+prefix_source = { path = "../sources/prefix_source" }
+k8s = { path = "../k8s" }
+types = { path = "../types" }
+ipnet = "2.8.0"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json"] }
+tracing = "0.1.37"

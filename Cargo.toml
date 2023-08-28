@@ -1,8 +1,10 @@
 [workspace]
 
 members = [
+    "types",
     "metallb-dyn6",
-    "sources/address_source",
+    "sources/prefix_source",
     "sources/interface",
     "sources/my_ip",
+    "k8s",
 ]

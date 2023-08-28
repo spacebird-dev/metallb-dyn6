@@ -1,6 +1,8 @@
-use std::net::Ipv6Addr;
+use std::{net::Ipv6Addr, time::Duration};
 
-use address_source::{AddressSource, SourceError};
+use ipnet::Ipv6Net;
+use prefix_source::addr_to_network;
+use prefix_source::{PrefixSource, SourceError};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 
@@ -18,27 +20,36 @@ struct MyIpResponse {
     r#type: MyIpType,
 }
 
-pub struct IpifySource {
+#[derive(Debug, Clone)]
+pub struct MyIpSource {
     client: Client,
 }
 
-impl IpifySource {
-    pub fn new() -> Result<Self, SourceError> {
-        Ok(IpifySource {
+impl MyIpSource {
+    pub fn new() -> Self {
+        MyIpSource {
             client: Client::new(),
-        })
+        }
     }
 }
 
-impl AddressSource for IpifySource {
-    fn get(&self) -> Result<Ipv6Addr, SourceError> {
-        Ok(self
+impl Default for MyIpSource {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PrefixSource for MyIpSource {
+    fn get(&self) -> Result<Ipv6Net, SourceError> {
+        let ip = self
             .client
             .get(MY_IP_URL)
+            .timeout(Duration::from_secs(30))
             .send()
             .map_err(|e| SourceError { msg: e.to_string() })?
             .json::<MyIpResponse>()
             .map_err(|e| SourceError { msg: e.to_string() })?
-            .ip)
+            .ip;
+        Ok(addr_to_network(ip))
     }
 }
