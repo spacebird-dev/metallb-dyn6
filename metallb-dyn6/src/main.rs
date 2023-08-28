@@ -1,10 +1,10 @@
-use std::{net::Ipv6Addr, rc::Rc, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
 use clap::Parser;
 use cli::Cli;
-use interface::InterfaceSource;
-use ipnet::Ipv6Net;
+
+
 use k8s::AddressPoolUpdater;
 use prefix_source::PrefixSource;
 use subnet_override::SubnetOverride;

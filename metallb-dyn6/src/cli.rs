@@ -1,7 +1,7 @@
 use clap::Parser;
 use clap::ValueEnum;
 use std::net::Ipv6Addr;
-use std::time::Duration;
+
 use types::ranges::V6HostRange;
 
 macro_rules! env_prefix {

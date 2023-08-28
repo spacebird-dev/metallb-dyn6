@@ -1,11 +1,10 @@
 use std::{
     fmt::Display,
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
-    ops::Range,
     str::FromStr,
 };
 
-use ipnet::{IpNet, Ipv4Net, Ipv6AddrRange, Ipv6Net};
+use ipnet::{Ipv4Net, Ipv6Net};
 use thiserror::Error;
 
 const PREFIX_MASK: u128 = 0xffff_ffff_ffff_ffff_0000_0000_0000_0000;

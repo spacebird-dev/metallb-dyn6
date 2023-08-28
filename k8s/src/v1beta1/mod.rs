@@ -1,3 +1,3 @@
 mod ipaddresspool;
 
-pub(crate) use ipaddresspool::{IPAddressPool, ServiceAllocation};
+pub(crate) use ipaddresspool::{IPAddressPool};

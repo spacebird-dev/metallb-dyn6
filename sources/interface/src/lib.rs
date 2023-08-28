@@ -1,6 +1,6 @@
 mod v6_unicast;
 
-use std::net::Ipv6Addr;
+
 
 use interfaces::Interface;
 use ipnet::Ipv6Net;

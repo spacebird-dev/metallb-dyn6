@@ -1,6 +1,6 @@
-use std::{mem::transmute, net::Ipv6Addr};
+use std::{net::Ipv6Addr};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 use ipnet::Ipv6Net;
 
 #[derive(Debug)]
