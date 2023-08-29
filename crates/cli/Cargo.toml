@@ -2,6 +2,7 @@
 name = "metallb-dyn6"
 version = "0.1.0"
 edition = "2021"
+description = "Main metallb-dyn6 application"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -9,11 +10,8 @@ edition = "2021"
 clap = { version = "4.4.0", features = ["derive", "env", "string", "unicode"] }
 tokio = { version = "1.32.0", features = ["full"] }
 anyhow = { version = "1.0.75", features = ["backtrace"] }
-interface = { path = "../sources/interface" }
-my_ip = { path = "../sources/my_ip" }
-prefix_source = { path = "../sources/prefix_source" }
-k8s = { path = "../k8s" }
-types = { path = "../types" }
+metallb-dyn6-sources = { path = "../sources" }
+metallb-dyn6-k8s = { path = "../k8s" }
 ipnet = "2.8.0"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json"] }
 tracing = "0.1.37"

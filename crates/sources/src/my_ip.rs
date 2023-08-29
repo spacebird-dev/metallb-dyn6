@@ -2,10 +2,10 @@ use std::{net::Ipv6Addr, time::Duration};
 
 use async_trait::async_trait;
 use ipnet::Ipv6Net;
-use prefix_source::addr_to_network;
-use prefix_source::{PrefixSource, SourceError};
 use reqwest::Client;
 use serde::Deserialize;
+
+use crate::{addr_to_network, PrefixSource, SourceError};
 
 const MY_IP_URL: &str = "https://api6.my-ip.io/ip.json";
 

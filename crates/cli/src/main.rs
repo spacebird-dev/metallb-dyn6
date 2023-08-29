@@ -4,12 +4,14 @@ use anyhow::Result;
 use clap::Parser;
 use cli::Cli;
 
-use k8s::AddressPoolUpdater;
-use prefix_source::PrefixSource;
+use metallb_dyn6_k8s::{
+    ranges::{MetalLbAddressRange, V6HostRange, V6Range},
+    AddressPoolUpdater,
+};
+use metallb_dyn6_sources::{MyIpSource, PrefixSource};
 use subnet_override::SubnetOverride;
 use tracing::{event, instrument, Level};
 use tracing_subscriber::EnvFilter;
-use types::ranges::{MetalLbAddressRange, V6HostRange, V6Range};
 
 mod cli;
 mod subnet_override;
@@ -67,7 +69,7 @@ fn get_source(cli: &Cli) -> Result<Box<dyn PrefixSource>> {
     Ok(Box::new(match cli.source {
         cli::AddressSource::MyIp => {
             event!(Level::INFO, msg = "Using MyIP as address source");
-            my_ip::MyIpSource::new()
+            MyIpSource::new()
         }
     }))
 }

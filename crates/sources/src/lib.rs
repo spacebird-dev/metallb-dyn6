@@ -4,6 +4,10 @@ use async_trait::async_trait;
 use ipnet::Ipv6Net;
 use thiserror::Error;
 
+mod my_ip;
+
+pub use my_ip::MyIpSource;
+
 #[derive(Error, Debug, PartialEq, Eq, Hash, Clone)]
 #[error("Could not retrieve IPv6 address from source: {msg}")]
 pub struct SourceError {

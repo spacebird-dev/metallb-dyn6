@@ -8,10 +8,11 @@ use kube::{
 };
 use thiserror::Error;
 use tracing::{event, instrument, Level};
-use types::ranges::MetalLbAddressRange;
-use v1beta1::ipaddresspool::{IPAddressPool, IPAddressPoolStatus};
 
-mod v1beta1;
+use crate::{
+    ranges::MetalLbAddressRange,
+    v1beta1::ipaddresspool::{IPAddressPool, IPAddressPoolStatus},
+};
 
 #[derive(Debug)]
 pub struct AddressPoolUpdater {

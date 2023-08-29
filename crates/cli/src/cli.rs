@@ -1,8 +1,7 @@
 use clap::Parser;
 use clap::ValueEnum;
+use metallb_dyn6_k8s::ranges::V6HostRange;
 use std::net::Ipv6Addr;
-
-use types::ranges::V6HostRange;
 
 macro_rules! env_prefix {
     () => {

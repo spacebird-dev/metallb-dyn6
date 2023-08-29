@@ -1,10 +1,7 @@
 [workspace]
 
-members = [
-    "types",
-    "metallb-dyn6",
-    "sources/prefix_source",
-    "sources/interface",
-    "sources/my_ip",
-    "k8s",
-]
+members = ["crates/cli", "crates/sources", "crates/k8s"]
+
+[workspace.package]
+authors = ["Max Hösel <github@maxhoesel.de>"]
+license = "GPL-3.0"
