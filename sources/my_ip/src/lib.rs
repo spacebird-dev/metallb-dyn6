@@ -1,21 +1,22 @@
 use std::{net::Ipv6Addr, time::Duration};
 
+use async_trait::async_trait;
 use ipnet::Ipv6Net;
 use prefix_source::addr_to_network;
 use prefix_source::{PrefixSource, SourceError};
-use reqwest::blocking::Client;
+use reqwest::Client;
 use serde::Deserialize;
 
 const MY_IP_URL: &str = "https://api6.my-ip.io/ip.json";
 
 #[derive(Deserialize)]
 enum MyIpType {
-    Ipv6,
+    IPv6,
 }
 #[derive(Deserialize)]
 #[allow(dead_code)]
 struct MyIpResponse {
-    sucess: bool,
+    success: bool,
     ip: Ipv6Addr,
     r#type: MyIpType,
 }
@@ -39,15 +40,18 @@ impl Default for MyIpSource {
     }
 }
 
+#[async_trait]
 impl PrefixSource for MyIpSource {
-    fn get(&self) -> Result<Ipv6Net, SourceError> {
+    async fn get(&self) -> Result<Ipv6Net, SourceError> {
         let ip = self
             .client
             .get(MY_IP_URL)
             .timeout(Duration::from_secs(30))
             .send()
+            .await
             .map_err(|e| SourceError { msg: e.to_string() })?
             .json::<MyIpResponse>()
+            .await
             .map_err(|e| SourceError { msg: e.to_string() })?
             .ip;
         Ok(addr_to_network(ip))

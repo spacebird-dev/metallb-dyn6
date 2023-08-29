@@ -891,6 +891,7 @@ dependencies = [
 name = "interface"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "interfaces",
  "ipnet",
  "prefix_source",
@@ -1260,6 +1261,7 @@ dependencies = [
 name = "my_ip"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "ipnet",
  "prefix_source",
  "reqwest",
@@ -1614,6 +1616,7 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 name = "prefix_source"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "ipnet",
  "thiserror",
 ]

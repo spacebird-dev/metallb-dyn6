@@ -23,20 +23,10 @@ pub struct Cli {
     #[arg(
         value_enum,
         long,
-        required = true,
         env = concat!(env_prefix!(), "SOURCE"),
         default_value_t = AddressSource::MyIp
     )]
     pub source: AddressSource,
-
-    /// Use this field manager identity when patching the IPAddressPool
-    /// using server-side apply
-    #[arg(
-        long,
-        env = concat!(env_prefix!(), "FIELD_MANAGER"),
-        default_value = "metallb-dyn6"
-    )]
-    pub field_manager: String,
 
     /// Override a portion of the prefix (usually the subnet). This value must be a valid IPv6 address.
     /// For example, to set the subnet to :beef: with a /48 dynamic prefix, use: 0:0:0:beef::
@@ -79,7 +69,7 @@ pub struct Cli {
         env = concat!(env_prefix!(), "DRY_RUN"),
         default_value_t = false
     )]
-    pub dy_run: bool,
+    pub dry_run: bool,
 
     /// The namespace the MetalLB controller and speakers reside in.
     /// Needed to force-reload MetalLB after an address has changed.

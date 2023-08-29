@@ -1,7 +1,6 @@
 mod v6_unicast;
 
-
-
+use async_trait::async_trait;
 use interfaces::Interface;
 use ipnet::Ipv6Net;
 use prefix_source::{addr_to_network, PrefixSource, SourceError};
@@ -25,8 +24,9 @@ impl InterfaceSource {
     }
 }
 
+#[async_trait]
 impl PrefixSource for InterfaceSource {
-    fn get(&self) -> Result<Ipv6Net, SourceError> {
+    async fn get(&self) -> Result<Ipv6Net, SourceError> {
         let addr = self
             .iface
             .addresses

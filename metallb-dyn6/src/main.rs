@@ -1,14 +1,14 @@
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use anyhow::Result;
 use clap::Parser;
 use cli::Cli;
 
-
 use k8s::AddressPoolUpdater;
 use prefix_source::PrefixSource;
 use subnet_override::SubnetOverride;
 use tracing::{event, instrument, Level};
+use tracing_subscriber::EnvFilter;
 use types::ranges::{MetalLbAddressRange, V6HostRange, V6Range};
 
 mod cli;
@@ -26,7 +26,9 @@ struct RuntimeConfig {
 #[tokio::main]
 #[instrument]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt().json().init();
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env())
+        .init();
 
     let cli = Cli::parse();
     let subnet_override = match (cli.subnet_override, cli.prefix_length) {
@@ -37,34 +39,30 @@ async fn main() -> Result<()> {
 
     let source = get_source(&cli)?;
 
-    let config = Arc::new(RuntimeConfig {
+    let config = RuntimeConfig {
         source,
-        pool: AddressPoolUpdater::new(cli.pool, cli.field_manager, cli.metallb_namespace).await?,
+        pool: AddressPoolUpdater::new(cli.pool, cli.metallb_namespace).await?,
         subnet_override,
         host_range: cli.host_range,
-        dry_run: cli.dy_run,
-    });
+        dry_run: cli.dry_run,
+    };
     event!(Level::DEBUG, runtime_config = ?config);
 
     loop {
-        let config = Arc::clone(&config);
-        tokio::spawn(async move {
-            let r = run(config).await;
-            if let Err(e) = r {
-                let text = e.to_string();
-                event!(
-                    Level::ERROR,
-                    msg = "Run completed with errors",
-                    error = text
-                );
-            }
-        })
-        .await?;
+        let r = run(&config).await;
+        if let Err(e) = r {
+            let text = e.to_string();
+            event!(
+                Level::ERROR,
+                msg = "Run completed with errors",
+                error = text
+            );
+        }
         tokio::time::sleep(Duration::from_secs(cli.update_interval)).await;
     }
 }
 
-#[instrument]
+#[instrument(skip(cli))]
 fn get_source(cli: &Cli) -> Result<Box<dyn PrefixSource>> {
     Ok(Box::new(match cli.source {
         cli::AddressSource::MyIp => {
@@ -74,8 +72,8 @@ fn get_source(cli: &Cli) -> Result<Box<dyn PrefixSource>> {
     }))
 }
 
-#[instrument]
-async fn run(config: Arc<RuntimeConfig>) -> Result<()> {
+#[instrument(skip(config))]
+async fn run(config: &RuntimeConfig) -> Result<()> {
     if config.dry_run {
         event!(
             Level::WARN,
@@ -83,7 +81,7 @@ async fn run(config: Arc<RuntimeConfig>) -> Result<()> {
         );
     }
 
-    let mut prefix_net = config.source.get()?;
+    let mut prefix_net = config.source.get().await?;
     event!(Level::INFO, msg = "Retrieved dynamic prefix", prefix = ?prefix_net);
     assert_eq!(prefix_net.prefix_len(), 64);
 
@@ -105,26 +103,26 @@ async fn run(config: Arc<RuntimeConfig>) -> Result<()> {
         return Ok(());
     }
 
-    let updated_ranges = current_ranges
-        .iter()
-        .map(|r| match r {
-            // passthrough all ranges we don't care about
-            MetalLbAddressRange::V4Cidr(r) => MetalLbAddressRange::V4Cidr(*r),
-            MetalLbAddressRange::V6Cidr(r) => MetalLbAddressRange::V6Cidr(*r),
-            MetalLbAddressRange::V4Range(r) => MetalLbAddressRange::V4Range(*r),
-            // And replace any other ipv6-ranges with our desired one
-            MetalLbAddressRange::V6Range(_) => desired_range,
+    let mut updated_ranges = current_ranges
+        .into_iter()
+        .filter(|r| {
+            // Remove any pre-existing IPv6 address ranges
+            !matches!(
+                r,
+                MetalLbAddressRange::V6Cidr(_) | MetalLbAddressRange::V6Range(_)
+            )
         })
         .collect::<Vec<_>>();
+    updated_ranges.push(desired_range);
     event!(
-        Level::DEBUG,
+        Level::INFO,
         desired_ranges = ?updated_ranges
     );
 
     if !config.dry_run {
         config.pool.set_addresses(updated_ranges, true).await?;
+        event!(Level::INFO, msg = "Pool successfully updated");
     }
 
-    event!(Level::INFO, msg = "Update successful");
     Ok(())
 }

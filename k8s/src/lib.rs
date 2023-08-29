@@ -1,24 +1,21 @@
-
-
 use either::Either::Left;
 use k8s_openapi::api::core::v1::Pod;
 use kube::{
     api::{DeleteParams, ListParams, Patch, PatchParams},
-    core::object::HasSpec,
+    core::{object::HasSpec, ObjectMeta},
     runtime::{conditions::is_deleted, wait::await_condition},
     Api, Client,
 };
 use thiserror::Error;
 use tracing::{event, instrument, Level};
 use types::ranges::MetalLbAddressRange;
-use v1beta1::IPAddressPool;
+use v1beta1::ipaddresspool::{IPAddressPool, IPAddressPoolStatus};
 
 mod v1beta1;
 
 #[derive(Debug)]
 pub struct AddressPoolUpdater {
     pool_name: String,
-    field_manager: String,
     pool_api: Api<IPAddressPool>,
     pod_api: Api<Pod>,
 }
@@ -38,11 +35,7 @@ impl From<kube::Error> for K8sError {
 
 impl AddressPoolUpdater {
     #[instrument]
-    pub async fn new(
-        pool_name: String,
-        field_manager: String,
-        metallb_namespace: String,
-    ) -> Result<Self, K8sError> {
+    pub async fn new(pool_name: String, metallb_namespace: String) -> Result<Self, K8sError> {
         event!(
             Level::DEBUG,
             msg = "Creating k8s Client for MetalLB access",
@@ -52,8 +45,7 @@ impl AddressPoolUpdater {
 
         let updater = AddressPoolUpdater {
             pool_name: pool_name.clone(),
-            field_manager,
-            pool_api: Api::all(client.clone()),
+            pool_api: Api::namespaced(client.clone(), &metallb_namespace),
             pod_api: Api::namespaced(client, &metallb_namespace),
         };
         event!(
@@ -84,12 +76,21 @@ impl AddressPoolUpdater {
         force_reload: bool,
     ) -> Result<(), K8sError> {
         let mut pool = self.get_pool().await?;
-        pool.spec_mut().addresses = addresses.iter().map(|a| a.to_string()).collect::<Vec<_>>();
+        let spec = pool.spec_mut();
+        spec.addresses = addresses.iter().map(|a| a.to_string()).collect::<Vec<_>>();
+        let patch = IPAddressPool {
+            metadata: ObjectMeta {
+                ..Default::default()
+            },
+            spec: spec.clone(),
+            status: Some(IPAddressPoolStatus {}),
+        };
+
         self.pool_api
             .patch(
                 &self.pool_name,
-                &PatchParams::apply(&self.field_manager),
-                &Patch::Apply(&pool),
+                &PatchParams::default(),
+                &Patch::Merge(&patch),
             )
             .await
             .map(|_| ())?;
@@ -101,17 +102,17 @@ impl AddressPoolUpdater {
 
     async fn get_pool(&self) -> Result<IPAddressPool, K8sError> {
         self.pool_api
-            .get_opt(&self.pool_name)
-            .await?
-            .ok_or(K8sError {
-                msg: "Pool not found".to_string(),
+            .get(&self.pool_name)
+            .await
+            .map_err(|e| K8sError {
+                msg: format!("Error reading pool: {}", e),
             })
     }
 
     /// Forcibly delete all pods within the MetalLB namespace.
     /// This is required to get MetalLB to accept a new configuration, as documented here:
     /// https://github.com/metallb/metallb/issues/308
-    #[instrument]
+    #[instrument(skip(self))]
     async fn force_reset_metallb(&self) -> Result<(), K8sError> {
         event!(
             Level::INFO,

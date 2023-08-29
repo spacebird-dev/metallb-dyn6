@@ -1,5 +1,6 @@
 use std::{fmt::Debug, net::Ipv6Addr};
 
+use async_trait::async_trait;
 use ipnet::Ipv6Net;
 use thiserror::Error;
 
@@ -10,10 +11,11 @@ pub struct SourceError {
 }
 
 /// A [PrefixSource] provides a IPv6 Prefix that MetalLB can use to expose service
+#[async_trait]
 pub trait PrefixSource: Send + Debug + Sync {
     /// Return an available IPv6 Prefix for MetalLB.
     /// The prefix must have a length of /64, as is the case for a normal globally unique network.
-    fn get(&self) -> Result<Ipv6Net, SourceError>;
+    async fn get(&self) -> Result<Ipv6Net, SourceError>;
 }
 
 pub fn addr_to_network(addr: Ipv6Addr) -> Ipv6Net {
