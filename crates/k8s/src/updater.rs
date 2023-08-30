@@ -125,15 +125,14 @@ impl AddressPoolUpdater {
             .await?
         {
             for l in del {
-                let name = l.metadata.name.unwrap();
+                let (Some(name), Some(uid)) = (l.metadata.name, l.metadata.uid) else {
+                  event!(Level::WARN, msg = "Could not wait for pod deletion, metadata incomplete");
+                  continue;
+                };
                 event!(Level::DEBUG, msg = "Waiting for pod deletion", pod = name);
-                await_condition(
-                    self.pod_api.clone(),
-                    &name,
-                    is_deleted(&l.metadata.uid.unwrap()),
-                )
-                .await
-                .map_err(|e| K8sError { msg: e.to_string() })?;
+                await_condition(self.pod_api.clone(), &name, is_deleted(&uid))
+                    .await
+                    .map_err(|e| K8sError { msg: e.to_string() })?;
             }
         }
         Ok(())
