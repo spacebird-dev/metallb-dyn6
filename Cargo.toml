@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/cli", "crates/sources", "crates/k8s"]
+resolver = "2"
 
 [workspace.package]
 authors = ["Max Hösel <github@maxhoesel.de>"]

@@ -11,6 +11,8 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
     steps:
       - name: Check out codebase
         uses: actions/checkout@v3
