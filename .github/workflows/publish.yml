@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.target.name }}
+    name: Build (${{ matrix.target.name }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -138,7 +138,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           images: |
-            ${{ github.repository }}
             ghcr.io/${{ github.repository }}
             quay.io/${{ github.repository }}
           tags: |
