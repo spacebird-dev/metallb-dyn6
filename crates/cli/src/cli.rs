@@ -12,12 +12,6 @@ macro_rules! env_prefix {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
-    /// Name of the IPAddressPool resource to manage
-    #[arg(
-        env = concat!(env_prefix!(), "POOL"),
-    )]
-    pub pool: String,
-
     /// Source of the IPv4 address to set in all A records
     #[arg(
         value_enum,
@@ -71,13 +65,28 @@ pub struct Cli {
     pub dry_run: bool,
 
     /// The namespace the MetalLB controller and speakers reside in.
-    /// Needed to force-reload MetalLB after an address has changed.
     #[arg(
         long,
         env = concat!(env_prefix!(), "METALLB_NAMESPACE"),
         default_value = "metallb-system"
     )]
     pub metallb_namespace: String,
+
+    /// Name of the IPAddressPool resource to manage
+    #[arg(
+        env = concat!(env_prefix!(), "METALLB_POOL"),
+    )]
+    pub metallb_pool: String,
+
+    /// Use this label selector to filter pods when force-deleting MetalLB to refresh its configuration.
+    /// Only pods that match this selector will be deleted.
+    /// Only adjust this if your MetalLB instance is installed with a custom label name/instance.
+    #[arg(
+        long,
+        env = concat!(env_prefix!(), "METALLB_LABEL_SELECTOR"),
+        default_value = "app.kubernetes.io/name=metallb,app.kubernetes.io/instance=metallb"
+    )]
+    pub metallb_label_selector: String,
 }
 
 /// Which source to use for our Ipv4 address

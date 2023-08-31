@@ -1,0 +1,181 @@
+[config]
+# Don't use cargo-makes included tasks
+skip_core_tasks = true
+# Operate on the workspace level instead of the crate level
+default_to_workspace = false
+
+[env]
+# Default docker tag
+DOCKER_TAG = { value = "quay.io/maxhoesel/metallb-dyn6:latest", condition.env_not_set = [
+    "DOCKER_TAG",
+] }
+[env.development]
+PROFILE_DIR = "debug"
+[env.release]
+RELEASE_FLAG = "--release"
+PROFILE_DIR = "release"
+
+# DEPENDENCIES
+[tasks.install-cross]
+private = true
+install_crate = { crate_name = "cross", binary = "cross", test_arg = "--help" }
+[tasks.install-llvm-cov]
+private = true
+install_crate = { crate_name = "cargo-llvm-cov", binary = "cargo-llvm-cov", test_arg = "--help" }
+
+[tasks.default]
+alias = "build"
+
+# LINTING
+[tasks.lint]
+description = "Lint this project"
+category = "Lint"
+dependencies = ["clippy", "format"]
+[tasks.clippy]
+category = "Lint"
+description = "Run clippy"
+dependencies = ["install-clippy"]
+command = "cargo"
+args = ["clippy"]
+[tasks.format]
+category = "Lint"
+description = "Format the codebase"
+dependencies = ["install-rustfmt"]
+command = "cargo"
+args = ["fmt", "--all"]
+
+
+# BUILDS
+[tasks.build]
+category = "Build"
+command = "cargo"
+args = [
+    "build",
+    "--all-features",
+    "--workspace",
+    "@@remove-empty(RELEASE_FLAG)",
+]
+[tasks.build-cross]
+private = true
+dependencies = ["install-cross"]
+command = "cross"
+args = [
+    "build",
+    "--all-features",
+    "--workspace",
+    "--target",
+    "${TARGET}",
+    "@@remove-empty(RELEASE_FLAG)",
+]
+[tasks.build-x86_64-unknown-linux-gnu]
+private = false
+category = "Build"
+env = { "TARGET" = "x86_64-unknown-linux-gnu" }
+extend = "build-cross"
+[tasks.build-aarch64-unknown-linux-gnu]
+private = false
+category = "Build"
+env = { "TARGET" = "aarch64-unknown-linux-gnu" }
+extend = "build-cross"
+
+
+# TESTS
+[tasks.test]
+category = "Test"
+command = "cargo"
+args = ["test", "--all-features", "--workspace", "@@remove-empty(RELEASE_FLAG)"]
+[tasks.coverage]
+category = "Test"
+description = "Generate a coverage report"
+dependencies = ["install-llvm-cov"]
+command = "cargo"
+args = ["llvm-cov", "--lcov", "--output-path", "lcov.info"]
+[tasks.test-cross]
+private = true
+dependencies = ["install-cross"]
+command = "cross"
+args = [
+    "test",
+    "--all-features",
+    "--workspace",
+    "--target",
+    "${TARGET}",
+    "@@remove-empty(RELEASE_FLAG)",
+]
+[tasks.test-x86_64-unknown-linux-gnu]
+private = false
+category = "Test"
+env = { "TARGET" = "x86_64-unknown-linux-gnu" }
+extend = "test-cross"
+[tasks.test-aarch64-unknown-linux-gnu]
+private = false
+category = "Test"
+env = { "TARGET" = "aarch64-unknown-linux-gnu" }
+extend = "test-cross"
+
+
+# DOCKER CONTAINERS
+[tasks.docker-setup-builder]
+private = true
+category = "Docker"
+command = "docker"
+args = [
+    "buildx",
+    "create",
+    "--name",
+    "metallb-dyn6",
+    "--driver",
+    "docker-container",
+]
+ignore_errors = true
+[tasks.docker]
+category = "Docker"
+description = "Build a docker image for your local platform"
+dependencies = ["build"]
+command = "docker"
+args = [
+    "buildx",
+    "build",
+    "--build-arg",
+    "PROFILE_DIR=${PROFILE_DIR}",
+    "--tag",
+    "${DOCKER_TAG}",
+    ".",
+]
+[tasks.docker-cross]
+private = true
+command = "docker"
+args = [
+    "buildx",
+    "build",
+    "--builder",
+    "metallb-dyn6",
+    "--platform",
+    "${DOCKER_PLATFORM}",
+    "--build-arg",
+    "PROFILE_DIR=${PROFILE_DIR}",
+    "--build-arg",
+    "RUST_TARGET=${RUST_TARGET}",
+    "--tag",
+    "${DOCKER_TAG}",
+    ".",
+]
+[tasks.docker-amd64]
+dependencies = ["build-x86_64-unknown-linux-gnu", "docker-setup-builder"]
+category = "Docker"
+private = false
+env = { "RUST_TARGET" = "x86_64-unknown-linux-gnu", "DOCKER_PLATFORM" = "linux/amd64" }
+extend = "docker-cross"
+[tasks.docker-arm64]
+dependencies = ["build-aarch64-unknown-linux-gnu", "docker-setup-builder"]
+category = "Docker"
+private = false
+env = { "RUST_TARGET" = "aarch64-unknown-linux-gnu", "DOCKER_PLATFORM" = "linux/arm64" }
+extend = "docker-cross"
+
+# MISC
+[tasks.docs]
+category = "Miscellaneous"
+description = "Generate rustdoc for the project"
+command = "cargo"
+args = ["doc", "--no-deps", "--workspace"]

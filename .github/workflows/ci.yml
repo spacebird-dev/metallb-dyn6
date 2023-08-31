@@ -1,0 +1,107 @@
+---
+name: CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * 1,4"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out codebase
+        uses: actions/checkout@v3
+
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          override: true
+          toolchain: stable
+          components: clippy,rustfmt
+
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features --workspace
+
+      - uses: mbrobbel/rustfmt-check@0.8.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run pre-commit checks
+        uses: pre-commit/action@v3.0.0
+
+  build:
+    name: "Build andTest (${{ matrix.target.name }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: aarch64-unknown-linux-gnu
+          - name: x86_64-unknown-linux-gnu
+
+    steps:
+      - name: Check out codebase
+        uses: actions/checkout@v3
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          override: true
+          toolchain: stable
+      - name: Enable cargo caching
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target.name }}
+
+      # Install explicitly using binstall here instead of compiling with "cargo install" later
+      - name: Install build tools
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-make@0.36.13,cargo-llvm-cov@0.5.31,cross@0.2.5
+
+      - name: Build binary
+        run: cargo make build-${{ matrix.target.name }}
+
+      - name: Test
+        run: cargo make test-${{ matrix.target.name }}
+
+      # Only build coverage for amd64 linux variants, that's enough
+      - name: Build coverage
+        run: cargo make coverage
+        if: |
+          matrix.target.name == 'x86_64-unknown-linux-gnu'
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./lcov.info
+        if: |
+          matrix.target.name == 'x86_64-unknown-linux-gnu'
+
+  docs:
+    name: "Generate rustdoc"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out codebase
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          override: true
+          toolchain: stable
+
+      - name: Enable cargo caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-make
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-make@0.36.13
+
+      - name: Build docs
+        run: cargo make docs

@@ -14,9 +14,16 @@ use crate::{
     v1beta1::ipaddresspool::{IPAddressPool, IPAddressPoolStatus},
 };
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct MetalLbUpdaterConfig {
+    pub namespace: String,
+    pub ip_pool: String,
+    pub label_selector: String,
+}
+
 #[derive(Debug)]
-pub struct AddressPoolUpdater {
-    pool_name: String,
+pub struct MetalLbUpdater {
+    config: MetalLbUpdaterConfig,
     pool_api: Api<IPAddressPool>,
     pod_api: Api<Pod>,
 }
@@ -34,25 +41,25 @@ impl From<kube::Error> for K8sError {
     }
 }
 
-impl AddressPoolUpdater {
+impl MetalLbUpdater {
     #[instrument]
-    pub async fn new(pool_name: String, metallb_namespace: String) -> Result<Self, K8sError> {
+    pub async fn new(config: MetalLbUpdaterConfig) -> Result<Self, K8sError> {
         event!(
             Level::DEBUG,
             msg = "Creating k8s Client for MetalLB access",
-            pool = &pool_name
+            pool = ?config.ip_pool
         );
         let client = Client::try_default().await?;
 
-        let updater = AddressPoolUpdater {
-            pool_name: pool_name.clone(),
-            pool_api: Api::namespaced(client.clone(), &metallb_namespace),
-            pod_api: Api::namespaced(client, &metallb_namespace),
+        let updater = MetalLbUpdater {
+            config: config.clone(),
+            pool_api: Api::namespaced(client.clone(), &config.namespace),
+            pod_api: Api::namespaced(client, &config.namespace),
         };
         event!(
             Level::INFO,
             msg = "Created k8s Client for Pool",
-            pool_name = &pool_name
+            pool_name = ?config.ip_pool
         );
         let pool = updater.get_pool().await?;
         event!(Level::DEBUG, ?pool);
@@ -89,7 +96,7 @@ impl AddressPoolUpdater {
 
         self.pool_api
             .patch(
-                &self.pool_name,
+                &self.config.ip_pool,
                 &PatchParams::default(),
                 &Patch::Merge(&patch),
             )
@@ -103,7 +110,7 @@ impl AddressPoolUpdater {
 
     async fn get_pool(&self) -> Result<IPAddressPool, K8sError> {
         self.pool_api
-            .get(&self.pool_name)
+            .get(&self.config.ip_pool)
             .await
             .map_err(|e| K8sError {
                 msg: format!("Error reading pool: {}", e),
@@ -117,11 +124,18 @@ impl AddressPoolUpdater {
     async fn force_reset_metallb(&self) -> Result<(), K8sError> {
         event!(
             Level::INFO,
-            msg = "Forcibly deleting MetalLB pods to pick up new addresses"
+            msg = "Forcibly deleting MetalLB pods to pick up new addresses",
+            label_selector = ?self.config.label_selector
         );
         if let Left(del) = self
             .pod_api
-            .delete_collection(&DeleteParams::default(), &ListParams::default())
+            .delete_collection(
+                &DeleteParams::default(),
+                &ListParams {
+                    label_selector: Some(self.config.label_selector.clone()),
+                    ..Default::default()
+                },
+            )
             .await?
         {
             for l in del {

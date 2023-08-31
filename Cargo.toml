@@ -1,7 +1,8 @@
 [workspace]
-
 members = ["crates/cli", "crates/sources", "crates/k8s"]
 
 [workspace.package]
 authors = ["Max Hösel <github@maxhoesel.de>"]
-license = "GPL-3.0"
+license-file = "LICENSE"
+description = "Keep MetalLB updated with a dynamic Ipv6 prefix"
+version = "0.1.0"

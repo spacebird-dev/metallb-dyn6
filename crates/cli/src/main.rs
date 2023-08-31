@@ -6,7 +6,7 @@ use cli::Cli;
 
 use metallb_dyn6_k8s::{
     ranges::{MetalLbAddressRange, V6HostRange, V6Range},
-    AddressPoolUpdater,
+    MetalLbUpdater, MetalLbUpdaterConfig,
 };
 use metallb_dyn6_sources::{MyIpSource, PrefixSource};
 use subnet_override::SubnetOverride;
@@ -19,7 +19,7 @@ mod subnet_override;
 #[derive(Debug)]
 struct RuntimeConfig {
     source: Box<dyn PrefixSource>,
-    pool: AddressPoolUpdater,
+    pool: MetalLbUpdater,
     subnet_override: Option<SubnetOverride>,
     host_range: V6HostRange,
     dry_run: bool,
@@ -43,7 +43,12 @@ async fn main() -> Result<()> {
 
     let config = RuntimeConfig {
         source,
-        pool: AddressPoolUpdater::new(cli.pool, cli.metallb_namespace).await?,
+        pool: MetalLbUpdater::new(MetalLbUpdaterConfig {
+            ip_pool: cli.metallb_pool,
+            namespace: cli.metallb_namespace,
+            label_selector: cli.metallb_label_selector,
+        })
+        .await?,
         subnet_override,
         host_range: cli.host_range,
         dry_run: cli.dry_run,
