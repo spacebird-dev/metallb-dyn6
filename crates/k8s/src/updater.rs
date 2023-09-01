@@ -140,8 +140,11 @@ impl MetalLbUpdater {
         {
             for l in del {
                 let (Some(name), Some(uid)) = (l.metadata.name, l.metadata.uid) else {
-                  event!(Level::WARN, msg = "Could not wait for pod deletion, metadata incomplete");
-                  continue;
+                    event!(
+                        Level::WARN,
+                        msg = "Could not wait for pod deletion, metadata incomplete"
+                    );
+                    continue;
                 };
                 event!(Level::DEBUG, msg = "Waiting for pod deletion", pod = name);
                 await_condition(self.pod_api.clone(), &name, is_deleted(&uid))

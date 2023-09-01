@@ -141,7 +141,8 @@ impl FromStr for V6HostRange {
             return Err(RangeParseError::UnknownFormat);
         };
 
-        let (Ok(start), Ok(end)) = (startstr.parse::<Ipv6Addr>(), endstr.parse::<Ipv6Addr>()) else {
+        let (Ok(start), Ok(end)) = (startstr.parse::<Ipv6Addr>(), endstr.parse::<Ipv6Addr>())
+        else {
             return Err(RangeParseError::UnknownFormat);
         };
 
