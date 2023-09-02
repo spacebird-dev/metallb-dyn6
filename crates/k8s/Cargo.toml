@@ -21,7 +21,7 @@ kube = { version = "0.85.0", default-features = false, features = [
     "kube-runtime",
 ] }
 schemars = "0.8.12"
-serde = { version = "1.0.186", features = ["derive"] }
+serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.105"
 thiserror = "1.0.47"
 tracing = { version = "0.1.37" }
