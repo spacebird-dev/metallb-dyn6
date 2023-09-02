@@ -1,5 +1,5 @@
 {
     "extends": [
-        "github>starbird-dev/renovate-config"
+        "github>spacebird-dev/renovate-config"
     ]
 }
