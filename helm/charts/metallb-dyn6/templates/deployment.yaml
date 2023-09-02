@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "metallb-dyn6.fullname" . }}
+  labels:
+    {{- include "metallb-dyn6.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "metallb-dyn6.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "metallb-dyn6.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "metallb-dyn6.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          args:
+            - {{ required "A host range (metallb.hostRange) must be provided!" .Values.metallb.hostRange }}
+            - {{ required "An address pool name (metallb.pool) must be provided!" .Values.metallb.pool }}
+            - --source={{ .Values.dyn6.source }}
+            {{- if .Values.dyn6.subnetOverride.enabled }}
+            - --subnet-override={{ .Values.dyn6.subnetOverride.override }}
+            - --prefix-length={{ .Values.dyn6.subnetOverride.prefixLength }}
+            {{- end }}
+            - --update-interval={{ .Values.dyn6.updateInterval }}
+            - --metallb-namespace={{ .Release.Namespace }}
+            - "--metallb-pods-label-selector={{ .Values.metallb.podsLabelSelector }}"
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

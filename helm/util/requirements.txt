@@ -1,0 +1,5 @@
+# Tooling for keeping the helm-chart up-to-date
+semver==3.0.1
+frigate==0.7.0
+toml==0.10.2
+pyyaml==6.0.1

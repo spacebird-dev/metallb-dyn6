@@ -1,0 +1,10 @@
+{% extends "markdown.jinja2" %}
+
+{% block description -%}
+Dynamic Ipv6 prefix support for MetalLB
+
+Notes:
+- This chart **must** be installed in the same namespace as MetalLB! (Cross-namespace access through RBAC is not supported yet)
+- This chart automatically sets up a ServiceAccount and RoleBinding with edit access to the MetalLB namespace
+
+{%- endblock %}

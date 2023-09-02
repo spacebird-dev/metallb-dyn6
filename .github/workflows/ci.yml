@@ -61,7 +61,7 @@ jobs:
         run: cargo make docs
 
   build-test:
-    name: Build Release (${{ matrix.target.name }})
+    name: Build and Test (${{ matrix.target.name }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -154,7 +154,7 @@ jobs:
           asset_content_type: application/tar+gzip
 
   docker:
-    name: "Publish Docker Multiarch Image"
+    name: "Publish Docker Image"
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     needs:

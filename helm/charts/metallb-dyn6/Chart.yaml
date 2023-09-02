@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 0.1.0
+description: Dynamic Ipv6 prefix support for MetalLB
+name: metallb-dyn6
+type: application
+version: 0.1.0
