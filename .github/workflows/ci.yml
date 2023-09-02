@@ -38,48 +38,6 @@ jobs:
       - name: Run pre-commit checks
         uses: pre-commit/action@v3.0.0
 
-  tests:
-    name: "Tests (${{ matrix.target.name }})"
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - name: aarch64-unknown-linux-gnu
-          - name: x86_64-unknown-linux-gnu
-
-    steps:
-      - name: Check out codebase
-        uses: actions/checkout@v3
-      - name: Install rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Enable cargo caching
-        uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.target.name }}
-
-      # Install explicitly using binstall here instead of compiling with "cargo install" later
-      - name: Install build tools
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-make@0.36.13,cargo-llvm-cov@0.5.31,cross@0.2.5
-
-      - name: Test
-        run: cargo make test-${{ matrix.target.name }}
-
-      # Only build coverage for amd64 linux variants, that's enough
-      - name: Build coverage
-        run: cargo make coverage
-        if: |
-          matrix.target.name == 'x86_64-unknown-linux-gnu'
-      - name: Upload coverage report
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./lcov.info
-        if: |
-          matrix.target.name == 'x86_64-unknown-linux-gnu'
-
   docs:
     name: "Generate rustdoc"
     runs-on: ubuntu-latest
@@ -102,10 +60,9 @@ jobs:
       - name: Build docs
         run: cargo make docs
 
-  build:
+  build-test:
     name: Build Release (${{ matrix.target.name }})
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     strategy:
       matrix:
         target:
@@ -118,7 +75,6 @@ jobs:
       - name: Install rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-
       - name: Enable cargo caching
         uses: Swatinem/rust-cache@v2
         with:
@@ -129,11 +85,26 @@ jobs:
         with:
           tool: cargo-make@0.36.13,cross@0.2.5
 
-      - name: Build release binary
-        run: cargo make -p release build-${{ matrix.target.name }}
+      - name: Build and Test release binary
+        run: |
+          cargo make -p release build-${{ matrix.target.name }}
+          cargo make -p release test-${{ matrix.target.name }}
+
+      # Only build coverage for amd64 linux variants, that's enough
+      - name: Build coverage
+        run: cargo make coverage
+        if: |
+          matrix.target.name == 'x86_64-unknown-linux-gnu'
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./lcov.info
+        if: |
+          matrix.target.name == 'x86_64-unknown-linux-gnu'
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v3
+        if: github.ref == 'refs/heads/main'
         with:
           name: metallb-dyn6.${{ matrix.target.name }}
           path: target/${{ matrix.target.name }}/release/${{ github.event.repository.name }}${{ matrix.target.extension }}
@@ -143,10 +114,9 @@ jobs:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     needs:
-      - tests
       - docs
       - lint
-      - build
+      - build-test
     strategy:
       matrix:
         target:
@@ -188,10 +158,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     needs:
-      - tests
       - docs
       - lint
-      - build
+      - build-test
     steps:
       - name: Check out codebase
         uses: actions/checkout@v3
