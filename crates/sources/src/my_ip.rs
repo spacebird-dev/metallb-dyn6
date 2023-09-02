@@ -5,7 +5,7 @@ use ipnet::Ipv6Net;
 use reqwest::Client;
 use serde::Deserialize;
 
-use crate::{addr_to_network, PrefixSource, SourceError};
+use crate::{addr_to_network, NetworkSource, SourceError};
 
 const MY_IP_URL: &str = "https://api6.my-ip.io/ip.json";
 
@@ -41,7 +41,7 @@ impl Default for MyIpSource {
 }
 
 #[async_trait]
-impl PrefixSource for MyIpSource {
+impl NetworkSource for MyIpSource {
     async fn get(&self) -> Result<Ipv6Net, SourceError> {
         let ip = self
             .client

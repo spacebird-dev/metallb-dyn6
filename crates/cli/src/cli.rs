@@ -12,14 +12,14 @@ macro_rules! env_prefix {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
-    /// Source of the IPv4 address to set in all A records
+    /// Source of the dynamic IPv6 network that will be injected into MetalLB
     #[arg(
         value_enum,
         long,
         env = concat!(env_prefix!(), "SOURCE"),
-        default_value_t = AddressSource::MyIp
+        default_value_t = NetworkSource::MyIp
     )]
-    pub source: AddressSource,
+    pub source: NetworkSource,
 
     /// Override a portion of the prefix (usually the subnet). This value must be a valid IPv6 address.
     /// For example, to set the subnet to :beef: with a /48 dynamic prefix, use: 0:0:0:beef::
@@ -86,12 +86,12 @@ pub struct Cli {
         env = concat!(env_prefix!(), "METALLB_LABEL_SELECTOR"),
         default_value = "app.kubernetes.io/name=metallb,app.kubernetes.io/instance=metallb"
     )]
-    pub metallb_label_selector: String,
+    pub metallb_pods_label_selector: String,
 }
 
 /// Which source to use for our Ipv4 address
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, ValueEnum)]
-pub enum AddressSource {
+pub enum NetworkSource {
     //Interface,
     MyIp,
 }

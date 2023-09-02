@@ -8,7 +8,7 @@ use metallb_dyn6_k8s::{
     ranges::{MetalLbAddressRange, V6HostRange, V6Range},
     MetalLbUpdater, MetalLbUpdaterConfig,
 };
-use metallb_dyn6_sources::{MyIpSource, PrefixSource};
+use metallb_dyn6_sources::{MyIpSource, NetworkSource};
 use subnet_override::SubnetOverride;
 use tracing::{event, instrument, Level};
 use tracing_subscriber::EnvFilter;
@@ -18,7 +18,7 @@ mod subnet_override;
 
 #[derive(Debug)]
 struct RuntimeConfig {
-    source: Box<dyn PrefixSource>,
+    source: Box<dyn NetworkSource>,
     pool: MetalLbUpdater,
     subnet_override: Option<SubnetOverride>,
     host_range: V6HostRange,
@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
         pool: MetalLbUpdater::new(MetalLbUpdaterConfig {
             ip_pool: cli.metallb_pool,
             namespace: cli.metallb_namespace,
-            label_selector: cli.metallb_label_selector,
+            label_selector: cli.metallb_pods_label_selector,
         })
         .await?,
         subnet_override,
@@ -70,9 +70,9 @@ async fn main() -> Result<()> {
 }
 
 #[instrument(skip(cli))]
-fn get_source(cli: &Cli) -> Result<Box<dyn PrefixSource>> {
+fn get_source(cli: &Cli) -> Result<Box<dyn NetworkSource>> {
     Ok(Box::new(match cli.source {
-        cli::AddressSource::MyIp => {
+        cli::NetworkSource::MyIp => {
             event!(Level::INFO, msg = "Using MyIP as address source");
             MyIpSource::new()
         }

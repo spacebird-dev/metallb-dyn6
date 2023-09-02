@@ -16,7 +16,7 @@ pub struct SourceError {
 
 /// A [PrefixSource] provides a IPv6 Prefix that MetalLB can use to expose service
 #[async_trait]
-pub trait PrefixSource: Send + Debug + Sync {
+pub trait NetworkSource: Send + Debug + Sync {
     /// Return an available IPv6 Prefix for MetalLB.
     /// The prefix must have a length of /64, as is the case for a normal globally unique network.
     async fn get(&self) -> Result<Ipv6Net, SourceError>;
