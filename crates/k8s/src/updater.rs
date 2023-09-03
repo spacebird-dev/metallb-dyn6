@@ -11,7 +11,7 @@ use tracing::{event, instrument, Level};
 
 use crate::{
     ranges::MetalLbAddressRange,
-    v1beta1::ipaddresspool::{IPAddressPool, IPAddressPoolStatus},
+    v1beta1::ipaddresspool::{IPAddressPool, IPAddressPoolSpec, IPAddressPoolStatus},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -78,31 +78,21 @@ impl MetalLbUpdater {
             .collect::<Result<Vec<_>, K8sError>>()
     }
 
-    pub async fn set_addresses(
-        &self,
-        addresses: Vec<MetalLbAddressRange>,
-        force_reload: bool,
-    ) -> Result<(), K8sError> {
-        let mut pool = self.get_pool().await?;
-        let spec = pool.spec_mut();
-        spec.addresses = addresses.iter().map(|a| a.to_string()).collect::<Vec<_>>();
-        let patch = IPAddressPool {
-            metadata: ObjectMeta {
-                ..Default::default()
-            },
-            spec: spec.clone(),
-            status: Some(IPAddressPoolStatus {}),
-        };
+    pub async fn set_addresses(&self, addresses: Vec<MetalLbAddressRange>) -> Result<(), K8sError> {
+        let original_pool: IPAddressPool = self.get_pool().await?;
+        let mut new_spec = original_pool.clone().spec;
+        new_spec.addresses = addresses.iter().map(|a| a.to_string()).collect::<Vec<_>>();
 
-        self.pool_api
-            .patch(
-                &self.config.ip_pool,
-                &PatchParams::default(),
-                &Patch::Merge(&patch),
-            )
-            .await
-            .map(|_| ())?;
-        if force_reload {
+        self.patch_pool(&PatchParams::default(), new_spec).await?;
+
+        if let Err(e) = self.force_reset_metallb().await {
+            event!(
+                Level::ERROR,
+                msg = "Error while restarting MetalLB, reverting Pool change...",
+                error = e.to_string()
+            );
+            self.patch_pool(&PatchParams::default(), original_pool.spec)
+                .await?;
             self.force_reset_metallb().await?;
         }
         Ok(())
@@ -115,6 +105,26 @@ impl MetalLbUpdater {
             .map_err(|e| K8sError {
                 msg: format!("Error reading pool: {}", e),
             })
+    }
+
+    async fn patch_pool(
+        &self,
+        params: &PatchParams,
+        spec: IPAddressPoolSpec,
+    ) -> Result<(), K8sError> {
+        let patch = IPAddressPool {
+            metadata: ObjectMeta {
+                ..Default::default()
+            },
+            spec,
+            status: Some(IPAddressPoolStatus {}),
+        };
+
+        self.pool_api
+            .patch(&self.config.ip_pool, params, &Patch::Merge(&patch))
+            .await
+            .map(|_| ())?;
+        Ok(())
     }
 
     /// Forcibly delete all pods within the MetalLB namespace.
