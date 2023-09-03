@@ -2,7 +2,7 @@ use either::Either::Left;
 use k8s_openapi::api::core::v1::Pod;
 use kube::{
     api::{DeleteParams, ListParams, Patch, PatchParams},
-    core::{object::HasSpec, ObjectMeta},
+    core::ObjectMeta,
     runtime::{conditions::is_deleted, wait::await_condition},
     Api, Client,
 };

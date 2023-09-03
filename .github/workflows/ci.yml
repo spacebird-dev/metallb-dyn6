@@ -158,8 +158,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     needs:
-      - docs
-      - lint
       - build-test
     steps:
       - name: Check out codebase
