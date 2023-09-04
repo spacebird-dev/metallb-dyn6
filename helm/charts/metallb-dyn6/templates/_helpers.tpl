@@ -56,3 +56,10 @@ Create the name of the service account to use
 {{- define "metallb-dyn6.serviceAccountName" -}}
 {{- default (include "metallb-dyn6.fullname" .) .Values.serviceAccount.name }}
 {{- end }}
+
+{{/*
+Create the name of the role to use
+*/}}
+{{- define "metallb-dyn6.roleName" -}}
+{{- default (include "metallb-dyn6.fullname" .) .Values.role.name }}
+{{- end }}

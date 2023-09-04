@@ -7,6 +7,8 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+loglevel: info # Application loglevel. Can be error,warning,info,debug,trace
+
 dyn6:
   source: my-ip # Source of the dynamic IPv6 network that will be injected into MetalLB. Can only be `my-ip` at this point.
   subnetOverride:
@@ -23,10 +25,12 @@ metallb:
 serviceAccount:
   annotations: {} # Annotations to add to the created ServiceAccount
   name: "" # The name of the service account that metallb-dyn6 should use to update MetalLB. If not set, a name is generated using the fullname template
-
+role:
+  annotations: # Annotations to add to the created Role
+  name: "" # The name of the Role that will be created to let metallb-dyn6 update MetalLB. If not set, a name is generated using the fullname template
 roleBinding:
   annotations: {} # Annotations to add to the created RoleBinding
-  name: "" # The name of the RoleBinding that will be created for metallb-dyn6
+  name: "" # The name of the RoleBinding that will be created for metallb-dyn6. If not set, a name is generated using the fullname template
 
 podAnnotations: {} # Additional annotations for pod resources
 podSecurityContext: {} # Additional security context for pod resources

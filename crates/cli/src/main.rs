@@ -128,7 +128,6 @@ async fn run(config: &RuntimeConfig) -> Result<()> {
 
     if !config.dry_run {
         config.pool.set_addresses(updated_ranges).await?;
-        event!(Level::INFO, msg = "Pool successfully updated");
     }
 
     Ok(())

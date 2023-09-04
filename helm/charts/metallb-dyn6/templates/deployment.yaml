@@ -32,17 +32,27 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          args:
-            - {{ required "A host range (metallb.hostRange) must be provided!" .Values.metallb.hostRange }}
-            - {{ required "An address pool name (metallb.pool) must be provided!" .Values.metallb.pool }}
-            - --source={{ .Values.dyn6.source }}
+          env:
+            - name: RUST_LOG
+              value: {{ .Values.loglevel | quote }}
+            - name: METALLB_DYN6_HOST_RANGE
+              value: {{ .Values.metallb.hostRange | quote }}
+            - name: METALLB_DYN6_METALLB_POOL
+              value: {{ .Values.metallb.pool | quote }}
+            - name: METALLB_DYN6_SOURCE
+              value: {{ .Values.dyn6.source | quote }}
             {{- if .Values.dyn6.subnetOverride.enabled }}
-            - --subnet-override={{ .Values.dyn6.subnetOverride.override }}
-            - --prefix-length={{ .Values.dyn6.subnetOverride.prefixLength }}
+            - name: METALLB_DYN6_SUBNET_OVERRIDE
+              value: {{ .Values.dyn6.subnetOverride.override | quote }}
+            - name: METALLB_DYN6_PREFIX_LENGTH
+              value: {{ .Values.dyn6.subnetOverride.prefixLength | quote }}
             {{- end }}
-            - --update-interval={{ .Values.dyn6.updateInterval }}
-            - --metallb-namespace={{ .Release.Namespace }}
-            - "--metallb-pods-label-selector={{ .Values.metallb.podsLabelSelector }}"
+            - name: METALLB_DYN6_UPDATE_INTERVAL
+              value: {{ .Values.dyn6.updateInterval | quote }}
+            - name: METALLB_DYN6_METALLB_NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            - name: METALLB_DYN6_METALLB_LABEL_SELECTOR
+              value: {{ .Values.metallb.podsLabelSelector | quote }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
