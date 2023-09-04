@@ -153,6 +153,24 @@ jobs:
           asset_name: metallb-dyn6-${{ matrix.target.name }}.tar.gz
           asset_content_type: application/tar+gzip
 
+  helm:
+    name: Publish Helm Chart
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - build-test
+    steps:
+      - name: Check out codebase
+        uses: actions/checkout@v3
+
+      - name: Install helm
+        uses: azure@setup-helm@v4
+
+      - name: Release Helm Chart if needed
+        uses: helm/chart-releaser-action@v1
+        env:
+          CR_TOKEN: "{{ $secrets.GITHUB_TOKEN }}"
+
   docker:
     name: "Publish Docker Image"
     runs-on: ubuntu-latest
