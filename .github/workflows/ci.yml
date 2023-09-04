@@ -259,9 +259,10 @@ jobs:
           token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Release Helm Chart if needed
-        uses: helm/chart-releaser-action@v1
+        uses: helm/chart-releaser-action@v1.5.0
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           charts_dir: helm/charts
           mark_as_latest: false
+          config: .github/chart-releaser.yaml
