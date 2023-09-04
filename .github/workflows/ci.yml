@@ -162,7 +162,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     needs:
-      - build-test
+      - docker
     steps:
       - name: Check out codebase
         uses: actions/checkout@v3
