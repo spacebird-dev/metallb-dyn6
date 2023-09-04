@@ -255,10 +255,13 @@ jobs:
 
       - name: Install helm
         uses: azure/setup-helm@v3
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Release Helm Chart if needed
         uses: helm/chart-releaser-action@v1
         env:
-          CR_TOKEN: "{{ $secrets.GITHUB_TOKEN }}"
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           charts_dir: helm/charts
+          mark_as_latest: false
