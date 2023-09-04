@@ -74,5 +74,5 @@ jobs:
             This PR was created by the prepare-release workflow.
           commit-message: "Release ${{ needs.update-release-draft.outputs.release_name }}"
           branch: maintenance/release-pr
-          labels: pr-nochangelog
+          labels: chore
           delete-branch: true
