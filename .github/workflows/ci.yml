@@ -113,8 +113,6 @@ jobs:
 
       - name: Enable cargo caching
         uses: Swatinem/rust-cache@v2
-        with:
-          key: "{{ matrix.target.name }}"
 
       - name: Install build tools
         uses: taiki-e/install-action@v2
