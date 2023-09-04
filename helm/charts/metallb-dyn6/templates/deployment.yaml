@@ -33,14 +33,14 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
+            - name: METALLB_DYN6_SOURCE
+              value: {{ .Values.dyn6.source | quote }}
             - name: RUST_LOG
               value: {{ .Values.loglevel | quote }}
             - name: METALLB_DYN6_HOST_RANGE
               value: {{ .Values.metallb.hostRange | quote }}
             - name: METALLB_DYN6_METALLB_POOL
               value: {{ .Values.metallb.pool | quote }}
-            - name: METALLB_DYN6_SOURCE
-              value: {{ .Values.dyn6.source | quote }}
             {{- if .Values.dyn6.subnetOverride.enabled }}
             - name: METALLB_DYN6_SUBNET_OVERRIDE
               value: {{ .Values.dyn6.subnetOverride.override | quote }}
