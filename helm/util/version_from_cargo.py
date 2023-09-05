@@ -16,7 +16,8 @@ import yaml
 
 
 def main():
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         "--chart-directory",
         help="Path to the chart directory", default=os.getcwd())
@@ -37,10 +38,11 @@ def main():
             cargo_app_ver = VersionInfo.parse(data["package"]["version"])
         except KeyError:
             # Workspace
-            cargo_app_ver = VersionInfo.parse(data["workspace"]["package"]["version"])
+            cargo_app_ver = VersionInfo.parse(
+                data["workspace"]["package"]["version"])
         print(f"Read cargo package version: {cargo_app_ver}")
 
-    with open(Path(chart_directory).joinpath("Chart.yaml"), encoding="utf-8") as f:
+    with open(Path(chart_directory) / "Chart.yaml", encoding="utf-8") as f:
         chart_data = yaml.safe_load(f)
 
     current_chart_ver = VersionInfo.parse(str(chart_data["version"]))
@@ -55,7 +57,8 @@ def main():
         print("Cargo.toml contains prerelease version, not updating chart")
         return
     elif current_chart_app > cargo_app_ver:
-        raise ValueError("appVersion is larger than version in Cargo.toml, please resolve manually")
+        raise ValueError(
+            "appVersion is larger than version in Cargo.toml, please resolve manually")
 
     if current_chart_app.major < cargo_app_ver.major:
         chart_data["version"] = str(current_chart_ver.next_version("major"))
@@ -73,7 +76,7 @@ def main():
     print(f"New chart appVersion: {chart_data['appVersion']}")
 
     if not args.dry_run:
-        with open((chart_directory).joinpath("Chart.yaml"), "w", encoding="utf-8") as f:
+        with open(chart_directory / "Chart.yaml", "w", encoding="utf-8") as f:
             yaml.dump(chart_data, f, allow_unicode=True)
         print("Saved Chart.yaml")
 

@@ -1,11 +1,10 @@
 # only look at main app release tags and changes, ignore charts
-tag-prefix: "v"
+tag-prefix: "chart-v"
 include-paths:
-  - crates
-  - Cargo.toml
+  - helm/charts/metallb-dyn6
 
-name-template: 'v$RESOLVED_VERSION'
-tag-template: 'v$RESOLVED_VERSION'
+name-template: 'chart-v$RESOLVED_VERSION'
+tag-template: 'chart-v$RESOLVED_VERSION'
 categories:
   - title: '⚠️ BREAKING CHANGES ⚠️'
     labels:

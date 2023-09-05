@@ -1,5 +1,5 @@
 ---
-name: Prepare a new Release PR
+name: Prepare a new Chart Release
 
 on:
   workflow_dispatch:
@@ -18,38 +18,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          config-name: release-drafter.yml
+          config-name: release-drafter-chart.yml
 
-      - name: Setup rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-      - name: Enable cargo caching
-        uses: Swatinem/rust-cache@v2
+      - name: Extract version from release name
+        run: echo "RELEASE_VERSION=$(echo ${{ steps.drafter.outputs.name }} | sed 's/chart-//')" >> $GITHUB_ENV
+
       - name: Set up Python 3
         uses: actions/setup-python@v4
         with:
           python-version: "3"
 
-      - name: Install cargo-edit
-        run: cargo install cargo-edit --locked
-      - name: Update cargo version
-        run: |
-          cargo set-version --workspace "${{ steps.drafter.outputs.name }}"
-          cargo update -w
-
       - name: Update chart version
         working-directory: helm/charts/metallb-dyn6
         run: |
-          make version-from-cargo
+          make version=${{ env.RELEASE_VERSION }} set-version
 
       - name: Open PR for release
         uses: peter-evans/create-pull-request@v5
         with:
           add-paths: |
-            Cargo.toml
-            Cargo.lock
-            helm/charts/**/Chart.yaml
+            helm/charts/metallb-dyn6/Chart.yaml
           title: Prepare Release ${{ steps.drafter.outputs.name }}
           body: |
             Steps to release ${{ steps.drafter.outputs.name }}:
@@ -57,8 +45,8 @@ jobs:
             1. Merge this PR. This will update the chart version in the repository.
             2. Publish the created Draft Release [here](${{ steps.drafter.outputs.html_url }})
 
-            Once merged and published, the CI will then package both the app and the Helm charts and upload their assets.
-          commit-message: "Release ${{ steps.drafter.outputs.name }}"
-          branch: maintenance/release-pr
+            Once merged and published, the CI will then package and upload the Helm chart assets
+          commit-message: "Chart Release ${{ steps.drafter.outputs.name }}"
+          branch: maintenance/release-pr-chart
           labels: chore
           delete-branch: true
