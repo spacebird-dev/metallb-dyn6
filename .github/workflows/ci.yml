@@ -262,5 +262,5 @@ jobs:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           charts_dir: helm/charts
-          mark_as_latest: false
+          mark_as_latest: false # not yet valid with v1.5.0
           config: .github/chart-releaser.yaml

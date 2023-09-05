@@ -12,33 +12,22 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-release-draft:
-    name: Update Release Draft
-    if: github.ref == 'refs/heads/main'
+  prepare-release-pr:
+    name: Create release PR
     runs-on: ubuntu-latest
-    outputs:
-      release_name: ${{ steps.drafter.outputs.name }}
+    if: github.ref == 'refs/heads/main'
     steps:
+      - name: Check out codebase
+        uses: actions/checkout@v4
+
       - uses: release-drafter/release-drafter@v5
         id: drafter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
-  prepare-release-pr:
-    name: Create release PR
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    needs:
-      - update-release-draft
-    steps:
-      - name: Check out codebase
-        uses: actions/checkout@v4
-
       - name: Setup rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          override: true
           toolchain: stable
       - name: Enable cargo caching
         uses: Swatinem/rust-cache@v2
@@ -51,7 +40,7 @@ jobs:
         run: cargo install cargo-edit --locked
       - name: Update cargo version
         run: |
-          cargo set-version --workspace "${{ needs.update-release-draft.outputs.release_name }}"
+          cargo set-version --workspace "${{ steps.drafter.outputs.name }}"
           cargo update -w
 
       - name: Update chart version
@@ -66,13 +55,13 @@ jobs:
             Cargo.toml
             Cargo.lock
             helm/charts/**/Chart.yaml
-          title: Release ${{ needs.update-release-draft.outputs.release_name }}
+          title: Release ${{ steps.drafter.outputs.name }}
           body: |
-            Merge this PR to update the app to version ${{ needs.update-release-draft.outputs.release_name }}.
+            Merge this PR to update the app to version ${{ steps.drafter.outputs.name }}.
             Then, publish the GitHub release when you are ready.
 
             This PR was created by the prepare-release workflow.
-          commit-message: "Release ${{ needs.update-release-draft.outputs.release_name }}"
+          commit-message: "Release ${{ steps.drafter.outputs.name }}"
           branch: maintenance/release-pr
           labels: chore
           delete-branch: true
