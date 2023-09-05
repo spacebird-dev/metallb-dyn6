@@ -21,7 +21,7 @@ jobs:
           config-name: release-drafter-chart.yml
 
       - name: Extract version from release name
-        run: echo "RELEASE_VERSION=$(echo ${{ steps.drafter.outputs.name }} | sed 's/chart-//')" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=$(echo ${{ steps.drafter.outputs.name }} | sed 's/chart-v//')" >> $GITHUB_ENV
 
       - name: Set up Python 3
         uses: actions/setup-python@v4
