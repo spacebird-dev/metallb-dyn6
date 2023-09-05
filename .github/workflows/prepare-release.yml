@@ -1,5 +1,5 @@
 ---
-name: Prepare a new Release PR
+name: Prepare a new App Release
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
           config-name: release-drafter.yml
 
       - name: Extract version from release name
-        run: echo "RELEASE_VERSION=$(echo ${{ steps.drafter.outputs.name }} | sed 's/chart-v//')" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=$(echo ${{ steps.drafter.outputs.name }} | sed 's/v//')" >> $GITHUB_ENV
 
       - name: Setup rust
         uses: dtolnay/rust-toolchain@stable
