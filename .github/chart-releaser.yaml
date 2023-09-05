@@ -1,1 +1,3 @@
+owner: spacebird-dev
+git-repo: metallb-dyn6
 release-name-template: "chart-v{{ .Version }}"
