@@ -169,7 +169,7 @@ jobs:
   docker:
     name: "Publish Docker Image"
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/chart-v')  || startsWith(github.ref, 'refs/tags/v')
     needs:
       - build-test
     steps:
