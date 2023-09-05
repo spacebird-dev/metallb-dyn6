@@ -33,7 +33,7 @@ jobs:
       - update-release-draft
     steps:
       - name: Check out codebase
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup rust
         uses: dtolnay/rust-toolchain@stable
