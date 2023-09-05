@@ -20,6 +20,9 @@ jobs:
         with:
           config-name: release-drafter.yml
 
+      - name: Extract version from release name
+        run: echo "RELEASE_VERSION=$(echo ${{ steps.drafter.outputs.name }} | sed 's/chart-v//')" >> $GITHUB_ENV
+
       - name: Setup rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -35,7 +38,7 @@ jobs:
         run: cargo install cargo-edit --locked
       - name: Update cargo version
         run: |
-          cargo set-version --workspace "${{ steps.drafter.outputs.name }}"
+          cargo set-version --workspace "${{ env.RELEASE_VERSION }}"
           cargo update -w
 
       - name: Update chart version
