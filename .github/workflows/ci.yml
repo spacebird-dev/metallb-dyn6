@@ -96,10 +96,10 @@ jobs:
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v3
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/chart-v')
         with:
           name: metallb-dyn6.${{ matrix.target.name }}
-          path: target/${{ matrix.target.name }}/release/${{ github.event.repository.name }}${{ matrix.target.extension }}
+          path: target/${{ matrix.target.name }}/release/metallb-dyn6
 
   coverage:
     name: Create Test Coverage Report
@@ -139,7 +139,6 @@ jobs:
         target:
           - name: aarch64-unknown-linux-gnu
           - name: x86_64-unknown-linux-gnu
-          - name: x86_64-pc-windows-gnu
     steps:
       - name: Check out codebase
         uses: actions/checkout@v4
