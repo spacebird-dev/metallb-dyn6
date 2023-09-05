@@ -1,3 +1,6 @@
+# only look at main app release tags, ignore charts
+tag-prefix: "v"
+
 name-template: '$RESOLVED_VERSION'
 tag-template: 'v$RESOLVED_VERSION'
 categories:
