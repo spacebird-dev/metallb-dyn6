@@ -40,6 +40,7 @@ jobs:
       - name: Open PR for release
         uses: peter-evans/create-pull-request@v5
         with:
+          base: main
           add-paths: |
             helm/charts/metallb-dyn6/Chart.yaml
           title: Prepare Release ${{ steps.drafter.outputs.name }}

@@ -49,6 +49,7 @@ jobs:
       - name: Open PR for release
         uses: peter-evans/create-pull-request@v5
         with:
+          base: main
           add-paths: |
             Cargo.toml
             Cargo.lock
