@@ -44,7 +44,7 @@ jobs:
       - name: Update chart version
         working-directory: helm/charts/metallb-dyn6
         run: |
-          make version-from-cargo
+          make version=${{ env.RELEASE_VERSION }} set-app-version
 
       - name: Open PR for release
         uses: peter-evans/create-pull-request@v5
@@ -59,8 +59,9 @@ jobs:
 
             1. Merge this PR. This will update the chart version in the repository.
             2. Publish the created Draft Release [here](${{ steps.drafter.outputs.html_url }})
+            3. Wait for the CI to run. A new PR to release a new Helm Chart version will be created.
+            4. Merge this PR and release the Charts Draft Release
 
-            Once merged and published, the CI will then package both the app and the Helm charts and upload their assets.
           commit-message: "Release ${{ steps.drafter.outputs.name }}"
           branch: maintenance/release-pr
           labels: chore
