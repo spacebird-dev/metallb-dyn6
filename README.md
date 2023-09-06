@@ -71,7 +71,7 @@ helm install metallb-dyn6 spacebird/metallb-dyn6 \
 
 ---
 
-For a full list of possible values, please see the [Helm chart docs](./helm/charts/metallb-dyn6/README.md)
+For a full list of possible values, please see the [Helm chart docs](https://github.com/spacebird-dev/charts/tree/main/charts/metallb-dyn6)
 
 ### Subnet override
 

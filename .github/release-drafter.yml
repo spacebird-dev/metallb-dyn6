@@ -1,31 +1,23 @@
-# only look at main app release tags and changes, ignore charts
-tag-prefix: "v"
-include-paths:
-  - crates
-  - Cargo.toml
-
-name-template: 'v$RESOLVED_VERSION'
-tag-template: 'v$RESOLVED_VERSION'
+name-template: '$RESOLVED_VERSION'
+tag-template: '$RESOLVED_VERSION'
 categories:
-  - title: '⚠️ BREAKING CHANGES ⚠️'
+  - title: 'Major Changes'
     labels:
-      - 'pr-breaking'
-  - title: 'Features/Enhancements'
+      - 'pr-major'
+  - title: 'Features and Minor Changes'
     labels:
-      - 'pr-feature'
-  - title: 'Bug Fixes'
+      - 'pr-minor'
+  - title: 'Bug Fixes and Patches'
     labels:
-      - 'pr-bugfix'
+      - 'pr-patch'
   - title: 'Other'
     labels:
       - 'docs'
-      - 'enhancement'
 
 include-labels:
-  - pr-breaking
-  - pr-feature
-  - enhancement
-  - pr-bugfix
+  - pr-major
+  - pr-minor
+  - pr-patch
   - docs
 exclude-contributors:
   - github-actions
@@ -37,16 +29,27 @@ change-title-escapes: '\<*_&'
 version-resolver:
   major:
     labels:
-      - 'pr-breaking'
+      - 'pr-major'
   minor:
     labels:
-      - 'pr-feature'
+      - 'pr-minor'
   patch:
     labels:
-      - 'pr-bugfix'
+      - 'pr-patch'
   default: patch
 
 template: |
+  ⚠️ **Release Checklist** ⚠️
+
+  Do **NOT** publish this release until you've completed these steps:
+
+  1. Merge any outstanding version update PRs
+  2. Verify that the app version in project/lock files corresponds to this releases version
+  3. Ensure that the release notes are correct
+  4. Delete this section
+
+  ---
+
   # Changes
 
   $CHANGES
