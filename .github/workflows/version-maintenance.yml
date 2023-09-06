@@ -47,7 +47,6 @@ jobs:
           base: main
           add-paths: |
             crates/*/Cargo.toml
-            crates/*/Cargo.lock
             Cargo.toml
             Cargo.lock
           title: Update app version to ${{ env.RESOLVED_VERSION }}
