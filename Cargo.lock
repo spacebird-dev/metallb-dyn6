@@ -1005,7 +1005,7 @@ checksum = "5486aed0026218e61b8a01d5fbd5a0a134649abb71a0e53b7bc088529dced86e"
 
 [[package]]
 name = "metallb-dyn6"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -1019,7 +1019,7 @@ dependencies = [
 
 [[package]]
 name = "metallb-dyn6-k8s"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "either",
  "ipnet",
@@ -1035,7 +1035,7 @@ dependencies = [
 
 [[package]]
 name = "metallb-dyn6-sources"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "ipnet",
