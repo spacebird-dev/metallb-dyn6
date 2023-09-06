@@ -1,5 +1,5 @@
-name-template: 'v$RESOLVED_VERSION'
-tag-template: 'v$RESOLVED_VERSION'
+name-template: '$RESOLVED_VERSION'
+tag-template: '$RESOLVED_VERSION'
 categories:
   - title: 'Major Changes'
     labels:
@@ -39,6 +39,17 @@ version-resolver:
   default: patch
 
 template: |
+  ⚠️ **Release Checklist** ⚠️
+
+  Do **NOT** publish this release until you've completed these steps:
+
+  1. Merge any outstanding version update PRs
+  2. Verify that the app version in project/lock files corresponds to this releases version
+  3. Ensure that the release notes are correct
+  4. Delete this section
+
+  ---
+
   # Changes
 
   $CHANGES
