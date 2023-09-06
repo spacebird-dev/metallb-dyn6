@@ -216,24 +216,19 @@ jobs:
       - name: Create release asset archive
         run: tar cvzf binary.tar.gz --directory=/tmp metallb-dyn6
 
-      - name: Get current GitHub release
-        id: get_release
-        uses: bruceadams/get-release@v1.3.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload release artifact
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          upload_url: ${{ github.event.release.upload_url }}
           asset_path: binary.tar.gz
           asset_name: metallb-dyn6-${{ matrix.target.name }}.tar.gz
           asset_content_type: application/tar+gzip
 
   helm:
+    # TODO - make sure this doesnt trigger on a pre-release
     name: Publish Helm Chart
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/chart-v')
@@ -259,8 +254,23 @@ jobs:
           tar -xzf cr.tar.gz
           rm -f cr.tar.gz
 
-      - name: Upload Helm Chart to Release
+      - name: Package Helm Chart
         run: |
           cr package helm/charts/metallb-dyn6
-          cr upload --config .github/chart-releaser.yaml --token ${{ secrets.GITHUB_TOKEN }} --push
-          cr index --config .github/chart-releaser.yaml --index-path . --token ${{ secrets.GITHUB_TOKEN }} --push
+
+      - name: Determine Helm Chart Version number
+        run: echo "RELEASE_VERSION=$(echo ${{ github.event.release.tag_name }} | sed 's/chart-v//')" >> $GITHUB_ENV
+
+      - name: Upload Helm Chart
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: .cr-release-packages/metallb-dyn6-${{ env.RELEASE_VERSION }}.tgz
+          asset_name: metallb-dyn6-${{env.RELEASE_VERSION }}.tgz
+          asset_content_type: application/tar+gzip
+
+      - name: Update index.yaml
+        run: cr index --config .github/chart-releaser.yaml --index-path . --token ${{ secrets.GITHUB_TOKEN }} --push
