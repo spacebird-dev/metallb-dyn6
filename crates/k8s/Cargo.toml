@@ -10,7 +10,7 @@ description = "Manages m8s API access for updating MetalLB resources"
 either = "1.9.0"
 ipnet = "2.8.0"
 jsonschema = "0.17.1"
-k8s-openapi = { version = "0.19.0", features = ["v1_27", "schemars"] }
+k8s-openapi = { version = "0.20.0", features = ["v1_27", "schemars"] }
 kube = { version = "0.85.0", default-features = false, features = [
     "client",
     "rustls-tls",
