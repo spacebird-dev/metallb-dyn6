@@ -2,7 +2,7 @@
 name = "metallb-dyn6-k8s"
 version = "0.1.1"
 edition = "2021"
-description = "Manages m8s API access for updating MetalLB resources"
+description = "Manages k8s API access for updating MetalLB resources"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -10,8 +10,11 @@ description = "Manages m8s API access for updating MetalLB resources"
 either = "1.9.0"
 ipnet = "2.8.0"
 jsonschema = "0.17.1"
-k8s-openapi = { version = "0.20.0", features = ["v1_27", "schemars"] }
-kube = { version = "0.85.0", default-features = false, features = [
+# do not specify a specific k8s api version in the lib crate,
+# this should be done in the bin crate
+# https://kube.rs/upgrading/#renovate
+k8s-openapi = { version = "0.20.0", features = ["schemars"] }
+kube = { version = "0.86.0", default-features = false, features = [
     "client",
     "rustls-tls",
     "runtime",
@@ -25,3 +28,7 @@ serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.105"
 thiserror = "1.0.48"
 tracing = { version = "0.1.37" }
+
+[dev-dependencies]
+# we do enable a specific version for dev, so that tests can run
+k8s-openapi = { version = "0.20.0", features = ["schemars", "v1_27"] }
