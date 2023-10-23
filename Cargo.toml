@@ -6,4 +6,4 @@ resolver = "2"
 authors = ["Max Hösel <github@maxhoesel.de>"]
 license-file = "LICENSE"
 description = "Keep MetalLB updated with a dynamic Ipv6 prefix"
-version = "0.1.1"
+version = "0.1.2"
