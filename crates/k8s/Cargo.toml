@@ -1,6 +1,6 @@
 [package]
 name = "metallb-dyn6-k8s"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Manages k8s API access for updating MetalLB resources"
 
