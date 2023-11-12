@@ -23,7 +23,7 @@ kube = { version = "0.87.1", default-features = false, features = [
     "kube-derive",
     "kube-runtime",
 ] }
-schemars = "0.8.15"
+schemars = "0.8.16"
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
 thiserror = "1.0.50"
