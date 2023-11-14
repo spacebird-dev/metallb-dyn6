@@ -13,7 +13,7 @@ anyhow = { version = "1.0.75", features = ["backtrace"] }
 metallb-dyn6-sources = { path = "../sources" }
 metallb-dyn6-k8s = { path = "../k8s" }
 ipnet = "2.9.0"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 tracing = "0.1.40"
 # Set the exact k8s API version to use
 k8s-openapi = { version = "0.20.0", features = ["v1_27"] }
