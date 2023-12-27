@@ -9,7 +9,7 @@ description = "Main metallb-dyn6 application"
 [dependencies]
 clap = { version = "4.4.11", features = ["derive", "env", "string", "unicode"] }
 tokio = { version = "1.35.1", features = ["full"] }
-anyhow = { version = "1.0.76", features = ["backtrace"] }
+anyhow = { version = "1.0.77", features = ["backtrace"] }
 metallb-dyn6-sources = { path = "../sources" }
 metallb-dyn6-k8s = { path = "../k8s" }
 ipnet = "2.9.0"
