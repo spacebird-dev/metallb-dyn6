@@ -7,7 +7,7 @@ description = "Main metallb-dyn6 application"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.4.16", features = ["derive", "env", "string", "unicode"] }
+clap = { version = "4.4.17", features = ["derive", "env", "string", "unicode"] }
 tokio = { version = "1.35.1", features = ["full"] }
 anyhow = { version = "1.0.79", features = ["backtrace"] }
 metallb-dyn6-sources = { path = "../sources" }
