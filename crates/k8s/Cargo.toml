@@ -13,8 +13,8 @@ jsonschema = "0.17.1"
 # do not specify a specific k8s api version in the lib crate,
 # this should be done in the bin crate
 # https://kube.rs/upgrading/#renovate
-k8s-openapi = { version = "0.20.0", features = ["schemars"] }
-kube = { version = "0.87.2", default-features = false, features = [
+k8s-openapi = { version = "0.21.0", features = ["schemars"] }
+kube = { version = "0.88.0", default-features = false, features = [
     "client",
     "rustls-tls",
     "runtime",
@@ -31,4 +31,4 @@ tracing = { version = "0.1.40" }
 
 [dev-dependencies]
 # we do enable a specific version for dev, so that tests can run
-k8s-openapi = { version = "0.20.0", features = ["schemars", "v1_27"] }
+k8s-openapi = { version = "0.21.0", features = ["schemars", "v1_27"] }
