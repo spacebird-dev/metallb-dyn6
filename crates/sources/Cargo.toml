@@ -14,4 +14,4 @@ reqwest = { version = "0.12.4", default-features = false, features = [
     "json",
 ] }
 serde = { version = "1.0.198", features = ["derive"] }
-thiserror = "1.0.58"
+thiserror = "1.0.59"
