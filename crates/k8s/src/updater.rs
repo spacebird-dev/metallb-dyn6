@@ -7,7 +7,7 @@ use kube::{
     Api, Client,
 };
 use thiserror::Error;
-use tracing::{event, instrument, Level};
+use tracing::{debug, error, info, instrument, warn};
 
 use crate::{
     ranges::MetalLbAddressRange,
@@ -44,8 +44,7 @@ impl From<kube::Error> for K8sError {
 impl MetalLbUpdater {
     #[instrument]
     pub async fn new(config: MetalLbUpdaterConfig) -> Result<Self, K8sError> {
-        event!(
-            Level::DEBUG,
+        debug!(
             msg = "Creating k8s Client for MetalLB access",
             pool = ?config.ip_pool
         );
@@ -56,13 +55,12 @@ impl MetalLbUpdater {
             pool_api: Api::namespaced(client.clone(), &config.namespace),
             pod_api: Api::namespaced(client, &config.namespace),
         };
-        event!(
-            Level::INFO,
+        info!(
             msg = "Created k8s Client for Pool",
             pool_name = ?config.ip_pool
         );
         let pool = updater.get_pool().await?;
-        event!(Level::DEBUG, ?pool);
+        debug!(?pool);
         Ok(updater)
     }
 
@@ -84,18 +82,17 @@ impl MetalLbUpdater {
         new_spec.addresses = addresses.iter().map(|a| a.to_string()).collect::<Vec<_>>();
 
         self.patch_pool(&PatchParams::default(), new_spec).await?;
-        event!(Level::INFO, msg = "Pool updated");
+        info!(msg = "Pool updated");
 
         if let Err(e) = self.force_reset_metallb().await {
-            event!(
-                Level::ERROR,
+            error!(
                 msg = "Error while restarting MetalLB, reverting Pool change...",
                 error = e.to_string()
             );
             self.patch_pool(&PatchParams::default(), original_pool.spec.clone())
                 .await?;
             self.force_reset_metallb().await?;
-            event!(Level::INFO, msg = "Pool change reverted");
+            info!(msg = "Pool change reverted");
         }
         Ok(())
     }
@@ -106,7 +103,7 @@ impl MetalLbUpdater {
             .get(&self.config.ip_pool)
             .await
             .map(|p| {
-                event!(Level::DEBUG, pool = ?p);
+                debug!(pool = ?p);
                 p
             })
             .map_err(|e| K8sError {
@@ -128,13 +125,13 @@ impl MetalLbUpdater {
             status: Some(IPAddressPoolStatus {}),
         };
 
-        event!(Level::DEBUG, patch = ?patch);
+        debug!(patch = ?patch);
 
         self.pool_api
             .patch(&self.config.ip_pool, params, &Patch::Merge(&patch))
             .await
             .map(|p| {
-                event!(Level::DEBUG, pool = ?p);
+                debug!(pool = ?p);
             })
             .map_err(Into::into)
     }
@@ -144,8 +141,7 @@ impl MetalLbUpdater {
     /// https://github.com/metallb/metallb/issues/308
     #[instrument(skip(self))]
     async fn force_reset_metallb(&self) -> Result<(), K8sError> {
-        event!(
-            Level::INFO,
+        info!(
             msg = "Forcibly deleting MetalLB pods to pick up new addresses",
             label_selector = ?self.config.label_selector
         );
@@ -162,13 +158,10 @@ impl MetalLbUpdater {
         {
             for l in del {
                 let (Some(name), Some(uid)) = (l.metadata.name, l.metadata.uid) else {
-                    event!(
-                        Level::WARN,
-                        msg = "Could not wait for pod deletion, metadata incomplete"
-                    );
+                    warn!(msg = "Could not wait for pod deletion, metadata incomplete");
                     continue;
                 };
-                event!(Level::DEBUG, msg = "Waiting for pod deletion", pod = name);
+                debug!(msg = "Waiting for pod deletion", pod = name);
                 await_condition(self.pod_api.clone(), &name, is_deleted(&uid))
                     .await
                     .map_err(|e| K8sError { msg: e.to_string() })?;

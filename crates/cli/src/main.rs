@@ -4,16 +4,14 @@ use anyhow::Result;
 use clap::Parser;
 use cli::Cli;
 
-use metallb_dyn6_k8s::{
-    ranges::{MetalLbAddressRange, V6HostRange, V6Range},
-    MetalLbUpdater, MetalLbUpdaterConfig,
-};
+use metallb_dyn6_k8s::{ranges::V6HostRange, MetalLbUpdater, MetalLbUpdaterConfig};
 use metallb_dyn6_sources::{MyIpSource, NetworkSource};
 use subnet_override::SubnetOverride;
-use tracing::{event, instrument, Level};
+use tracing::{debug, error, info, instrument, warn};
 use tracing_subscriber::EnvFilter;
 
 mod cli;
+mod ranges;
 mod subnet_override;
 
 #[derive(Debug)]
@@ -25,6 +23,16 @@ struct RuntimeConfig {
     dry_run: bool,
 }
 
+#[instrument(skip(cli))]
+fn get_source(cli: &Cli) -> Result<Box<dyn NetworkSource>> {
+    Ok(Box::new(match cli.source {
+        cli::NetworkSource::MyIp => {
+            info!(msg = "Using MyIP as address source");
+            MyIpSource::new()
+        }
+    }))
+}
+
 #[tokio::main]
 #[instrument]
 async fn main() -> Result<()> {
@@ -33,10 +41,12 @@ async fn main() -> Result<()> {
         .init();
 
     let cli = Cli::parse();
+
     let subnet_override = match (cli.subnet_override, cli.prefix_length) {
-        (Some(or), Some(len)) => Some(subnet_override::validate_subnet_override(or, len)?),
+        (Some(or), Some(len)) => Some(SubnetOverride::new(or, len)?),
         (None, None) => None,
-        _ => unreachable!(), // Prevented by claps mutual requires
+        // Prevented by claps mutual requires
+        _ => unreachable!("subnet_override or prefix_length must be specified together"),
     };
 
     let source = get_source(&cli)?;
@@ -53,81 +63,45 @@ async fn main() -> Result<()> {
         host_range: cli.host_range,
         dry_run: cli.dry_run,
     };
-    event!(Level::DEBUG, runtime_config = ?config);
+    info!(runtime_config = ?config);
+
+    if config.dry_run {
+        warn!("Running in dry-run mode - no changes will be made");
+    }
 
     loop {
         let r = run(&config).await;
         if let Err(e) = r {
             let text = e.to_string();
-            event!(
-                Level::ERROR,
-                msg = "Run completed with errors",
-                error = text
-            );
+            error!(msg = "Run completed with errors", error = text);
         }
         tokio::time::sleep(Duration::from_secs(cli.update_interval)).await;
     }
 }
 
-#[instrument(skip(cli))]
-fn get_source(cli: &Cli) -> Result<Box<dyn NetworkSource>> {
-    Ok(Box::new(match cli.source {
-        cli::NetworkSource::MyIp => {
-            event!(Level::INFO, msg = "Using MyIP as address source");
-            MyIpSource::new()
-        }
-    }))
-}
-
 #[instrument(skip(config))]
 async fn run(config: &RuntimeConfig) -> Result<()> {
-    if config.dry_run {
-        event!(
-            Level::WARN,
-            "Running in dry-run mode - no changes will be made"
-        );
-    }
-
-    let mut prefix_net = config.source.get().await?;
-    event!(Level::INFO, msg = "Retrieved dynamic prefix", prefix = ?prefix_net);
+    let prefix_net = config.source.get().await?;
+    info!(msg = "Retrieved dynamic prefix", prefix = ?prefix_net);
     assert_eq!(prefix_net.prefix_len(), 64);
 
-    if let Some(subnet_override) = &config.subnet_override {
-        prefix_net = subnet_override::apply_subnet_override(&prefix_net, subnet_override)?;
-    }
-
-    let desired_range =
-        MetalLbAddressRange::V6Range(V6Range::from_host_range(prefix_net, config.host_range));
-    event!(Level::INFO, msg = "Desired address range", range = ?desired_range);
-
     let current_ranges = config.pool.get_addresses().await?;
-    event!(Level::DEBUG, current_ranges = ?current_ranges);
-    if current_ranges.contains(&desired_range) {
-        event!(
-            Level::INFO,
-            msg = "Address range already present, nothing to do"
-        );
-        return Ok(());
-    }
+    debug!(current_ranges = ?current_ranges);
 
-    let mut updated_ranges = current_ranges
-        .into_iter()
-        .filter(|r| {
-            // Remove any pre-existing IPv6 address ranges
-            !matches!(
-                r,
-                MetalLbAddressRange::V6Cidr(_) | MetalLbAddressRange::V6Range(_)
-            )
-        })
-        .collect::<Vec<_>>();
-    updated_ranges.push(desired_range);
-    event!(
-        Level::INFO,
-        desired_ranges = ?updated_ranges
-    );
+    let Some(desired_ranges) = ranges::calculate_changed_ranges(
+        &current_ranges,
+        prefix_net,
+        config.host_range,
+        config.subnet_override,
+    ) else {
+        info!("Desired address ranges match current ranges, nothing to do");
+        return Ok(());
+    };
 
     if !config.dry_run {
-        config.pool.set_addresses(updated_ranges).await?;
+        config.pool.set_addresses(desired_ranges).await?;
+    } else {
+        info!("Skipping applying changes due to dry-run mode being enabled")
     }
 
     Ok(())

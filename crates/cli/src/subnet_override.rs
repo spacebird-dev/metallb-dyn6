@@ -3,46 +3,37 @@ use std::net::Ipv6Addr;
 use anyhow::{bail, Result};
 use ipnet::Ipv6Net;
 
-#[derive(Debug)]
-#[non_exhaustive]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/// A mask to override a the last n bits of an IPv6 network prefix
 pub(crate) struct SubnetOverride {
-    pub(crate) subnet: Ipv6Addr,
-    pub(crate) prefix_length: u8,
-}
-
-// Ensure that the subnet override contains a valid subnet definition, given the host prefix length
-pub(crate) fn validate_subnet_override(
     subnet: Ipv6Addr,
+    /// Length of the prefix, guaranteed to be less than 64
     prefix_length: u8,
-) -> Result<SubnetOverride> {
-    const HOST_MASK: u128 = 0x0000_0000_0000_0000_ffff_ffff_ffff_ffff;
-
-    // should always be true as prefix_length is validated by clap
-    assert!(prefix_length < 64);
-
-    let prefix_mask = u128::from(
-        Ipv6Net::new("ffff::".parse().unwrap(), prefix_length)
-            .unwrap()
-            .netmask(),
-    );
-    if (HOST_MASK | prefix_mask) & u128::from(subnet) != 0 {
-        bail!("Subnet override must have empty prefix and host sections");
-    } else {
-        Ok(SubnetOverride {
-            subnet,
-            prefix_length,
-        })
-    }
 }
 
-pub(crate) fn apply_subnet_override(
-    prefix: &Ipv6Net,
-    subnet_override: &SubnetOverride,
-) -> Result<Ipv6Net> {
-    let truncated_addr = Ipv6Net::new(prefix.network(), subnet_override.prefix_length)?.network();
-    let overriden_network =
-        Ipv6Addr::from(u128::from(truncated_addr) | u128::from(subnet_override.subnet));
-    Ok(Ipv6Net::new(overriden_network, 64).unwrap())
+impl SubnetOverride {
+    pub(crate) fn new(subnet: Ipv6Addr, prefix_length: u8) -> Result<SubnetOverride> {
+        let prefix_mask = if prefix_length >= 64 {
+            bail!("Prefix length must be <64");
+        } else {
+            u128::from(u64::MAX >> prefix_length) << 64
+        };
+
+        if u128::from(subnet) & !prefix_mask != 0 {
+            bail!("Subnet override must have empty prefix and host sections");
+        } else {
+            Ok(SubnetOverride {
+                subnet,
+                prefix_length,
+            })
+        }
+    }
+    pub(crate) fn apply(&self, prefix: Ipv6Net) -> Ipv6Net {
+        let truncated_addr = Ipv6Net::new_assert(prefix.network(), self.prefix_length).network();
+        let overriden_network =
+            Ipv6Addr::from(u128::from(truncated_addr) | u128::from(self.subnet));
+        Ipv6Net::new_assert(overriden_network, 64)
+    }
 }
 
 #[cfg(test)]
@@ -51,36 +42,26 @@ mod tests {
     use super::*;
 
     #[test]
-    fn validate_subnet_fails_on_incorrect_subnet() {
-        validate_subnet_override("a:0:0:dead::".parse().unwrap(), 48).unwrap_err();
-        validate_subnet_override("0:0:0:dead::f".parse().unwrap(), 48).unwrap_err();
-        validate_subnet_override("0:0:0:dead::".parse().unwrap(), 56).unwrap_err();
+    fn nonzero_network_bits_fails() {
+        SubnetOverride::new(Ipv6Addr::new(0xa, 0, 0, 0xdead, 0, 0, 0, 0), 48).unwrap_err();
+        SubnetOverride::new(Ipv6Addr::new(0, 0, 0, 0xdead, 0, 0, 0, 0), 56).unwrap_err();
     }
 
     #[test]
-    fn validate_apply_subnet_override() {
-        assert_eq!(
-            apply_subnet_override(
-                &Ipv6Net::new("2001:db8:dead:beef::".parse().unwrap(), 64).unwrap(),
-                &SubnetOverride {
-                    subnet: "0:0:0:d00f::".parse().unwrap(),
-                    prefix_length: 48
-                }
-            )
-            .unwrap(),
-            Ipv6Net::new("2001:db8:dead:d00f::".parse().unwrap(), 64).unwrap()
-        );
+    fn nonzero_host_bits_fails() {
+        SubnetOverride::new(Ipv6Addr::new(0, 0, 0, 0xdead, 0, 0, 0, 0xf), 48).unwrap_err();
+    }
 
+    #[test]
+    fn overrides_subnet() -> Result<()> {
+        let r#override = SubnetOverride::new(Ipv6Addr::new(0, 0, 0, 0xdead, 0, 0, 0, 0), 48)?;
         assert_eq!(
-            apply_subnet_override(
-                &Ipv6Net::new("2001:db8:dead:beef::".parse().unwrap(), 64).unwrap(),
-                &SubnetOverride {
-                    subnet: "0:0:0:000f::".parse().unwrap(),
-                    prefix_length: 56
-                }
-            )
-            .unwrap(),
-            Ipv6Net::new("2001:db8:dead:be0f::".parse().unwrap(), 64).unwrap()
-        )
+            r#override.apply(Ipv6Net::new_assert(
+                Ipv6Addr::new(0x2001, 0xdb8, 0, 0xbeef, 0, 0, 0, 0),
+                64
+            )),
+            Ipv6Net::new_assert(Ipv6Addr::new(0x2001, 0xdb8, 0, 0xdead, 0, 0, 0, 0), 64)
+        );
+        Ok(())
     }
 }
