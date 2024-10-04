@@ -9,7 +9,7 @@ description = "Manages k8s API access for updating MetalLB resources"
 [dependencies]
 either = "1.11.0"
 ipnet = "2.9.0"
-jsonschema = "0.21.0"
+jsonschema = "0.22.0"
 # do not specify a specific k8s api version in the lib crate,
 # this should be done in the bin crate
 # https://kube.rs/upgrading/#renovate
