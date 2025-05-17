@@ -68,6 +68,7 @@ helm install metallb-dyn6 spacebird/metallb-dyn6 \
 - You **must** install `metallb-dyn6` into the same namespace as your `metallb` installation.
 - The parameters `metallb.hostRange` and `metallb.pool` are **required**.
 - `metallb.hostRange` must be a dash-separated range - it cannot be a `/xx` CIDR-style range.
+- To see the minimum supported k8s version, check the `k8s-openapi` feature flag in [crates/cli/Cargo.toml](./crates/cli/Cargo.toml)
 
 ---
 
