@@ -22,3 +22,6 @@ test-cross target:
 
 docker tag: build
     docker buildx build --tag {{ tag }} .
+
+docs:
+    cargo doc --no-deps --workspace

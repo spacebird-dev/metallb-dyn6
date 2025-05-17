@@ -56,13 +56,12 @@ jobs:
       - name: Enable cargo caching
         uses: Swatinem/rust-cache@v2
 
-      - name: Install cargo-make
-        uses: taiki-e/install-action@v2
+      - uses: extractions/setup-just@v3
         with:
-          tool: cargo-make@0.36.13
+          just-version: '1.39.0'
 
       - name: Build docs
-        run: cargo make docs
+        run: just docs
 
   build-test:
     name: Build and Test (${{ matrix.target.name }})
@@ -180,6 +179,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs:
       - build-test
+      - docs
     strategy:
       matrix:
         target:
