@@ -1,9 +1,8 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
-ARG RUST_TARGET=""
-ARG PROFILE_DIR
+ARG TARGET_DIR=release
 
-COPY target/${RUST_TARGET}/${PROFILE_DIR}/metallb-dyn6 /usr/local/bin/
+COPY target/${TARGET_DIR}/metallb-dyn6 /usr/local/bin/
 RUN chmod +x /usr/local/bin/metallb-dyn6
 
 # run unprivileged
