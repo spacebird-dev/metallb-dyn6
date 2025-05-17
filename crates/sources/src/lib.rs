@@ -14,7 +14,7 @@ pub struct SourceError {
     pub msg: String,
 }
 
-/// A [PrefixSource] provides a IPv6 Prefix that MetalLB can use to expose service
+/// A [NetworkSource] provides a IPv6 Prefix that MetalLB can use to expose service
 #[async_trait]
 pub trait NetworkSource: Send + Debug + Sync {
     /// Return an available IPv6 Prefix for MetalLB.
