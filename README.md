@@ -1,5 +1,8 @@
 # metallb-dyn6
 
+NOTE: This project has been archived and will not be developed further.
+Recommended replacement: Use [externalip-manager](https://github.com/spacebird-dev/externalip-manager) in combination with NPTv6 and a ULA for MetalLB, then use the "merge" solver to map the ULA to your public prefix.
+
 Dynamic IPv6 Prefix support for [MetalLB](https://metallb.universe.tf/).
 
 This utility enables MetalLB to manage an IPv6 address pool with a dynamically changing prefix.
